@@ -1,4 +1,21 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Alumni Sans";
+  src: url("/src/assets/fonts/AlumniSans-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Alumni Sans";
+  src: url("/src/assets/fonts/AlumniSans-Italic-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+
+
 /* 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

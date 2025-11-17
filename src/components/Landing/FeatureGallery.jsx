@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 
-import imgImage1 from "../../assets/Landing/Image1.png";
-import imgImage2 from "../../assets/Landing/Image2.png";
-import imgImage3 from "../../assets/Landing/Image3.png";
-import imgImage4 from "../../assets/Landing/Image4.png";
+import imgImage1 from "../../assets/images/Landing/Image1.png";
+import imgImage2 from "../../assets/images/Landing/Image2.png";
+import imgImage3 from "../../assets/images/Landing/Image3.png";
+import imgImage4 from "../../assets/images/Landing/Image4.png";
 
 export function useActiveBreakpoint() {
   const [width, setWidth] = useState(window.innerWidth);

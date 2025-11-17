@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import imgBackground from "../../assets/Landing/Background.png";
+import imgBackground from "../../assets/images/Landing/Background.png";
 
 const imgDeviceFrame =
   "https://i.pinimg.com/736x/c5/21/81/c52181f5212108d03720d77bdc81955a.jpg";
