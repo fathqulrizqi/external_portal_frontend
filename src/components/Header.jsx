@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import imgNgkLogo1 from "../assets/images/NGK-Logo.png";
-
+import imgLogoNiterra from "../assets/images/Logo-Niterra-01.png";
+import { Link } from "react-router-dom";
 /* ---------------------------------------------------
    HOOK: BREAKPOINT
 --------------------------------------------------- */
@@ -17,70 +17,78 @@ function useActiveBreakpoint() {
 }
 
 /* ---------------------------------------------------
-   SMALL COMPONENTS
+   COMPONENTS
 --------------------------------------------------- */
-function Logo({ width = 73, height = 46 }) {
+function Logo({ width, height }) {
   return (
-    <div style={{ width, height }} className="relative shrink-0">
-      <img
-        src={imgNgkLogo1}
-        alt="NGK Logo"
-        className="absolute inset-0 object-cover size-full pointer-events-none"
-      />
-    </div>
+    <Link to="/" className="block">
+      <div style={{ width, height }} className="relative shrink-0 cursor-pointer">
+        <img
+          src={imgLogoNiterra}
+          alt="Niterra Logo"
+          className="absolute inset-0 object-cover size-full pointer-events-none"
+        />
+      </div>
+    </Link>
   );
+}
+
+function Divider() {
+  return <div className="bg-[#f9b000] h-[22px] w-px shrink-0" />;
 }
 
 function RegisterButton() {
   return (
     <a
-      className="bg-[red] px-[8px] py-[4px] cursor-pointer flex items-center justify-center"
-      href="/register-profile"
+      href="/register"
+      className="bg-[#00727d] px-[8px] py-[4px] flex items-center justify-center shrink-0"
     >
-      <p className="font-alumni text-white text-[12px] tracking-[1.3px]">
+      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-white">
         Register
       </p>
     </a>
   );
 }
 
-function NavLinks({ showFullMenu = true }) {
+function NavLinks({ showFullMenu }) {
+  if (!showFullMenu) return null;
+
   return (
     <div className="flex items-center gap-[19px]">
-      {showFullMenu && (
-        <>
-          <p className="font-alumni text-white text-[12px] tracking-[1.3px]">
-            E-Bidding
-          </p>
-          <p className="font-alumni text-white text-[12px] tracking-[1.3px]">
-            Payment Order
-          </p>
-          <div className="bg-white w-px h-[22px]" />
-        </>
-      )}
-
-      <p className="font-alumni text-white text-[12px] tracking-[1.3px]">
+      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
+        E-Bidding
+      </p>
+      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
+        Payment Order
+      </p>
+      <Divider />
+      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
         Login
       </p>
-
       <RegisterButton />
     </div>
   );
 }
 
+function MobileMenuIcon() {
+  return (
+    <div className="text-black text-[24px] cursor-pointer">
+      <i className="fa-solid fa-bars"></i>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------
-   MAIN NAVBAR LAYOUT
+   LAYOUT WRAPPER
 --------------------------------------------------- */
 function NavbarLayout({ logoSize, showFullMenu }) {
   return (
-    <nav className="bg-black w-full">
-      <div className="flex items-center px-[48px] py-0 w-full">
-        <div className="flex items-center w-full gap-4">
-          <Logo width={logoSize.w} height={logoSize.h} />
+    <nav className="bg-white w-full">
+      <div className="flex items-center px-[48px] py-[16px] w-full">
+        <Logo width={logoSize.w} height={logoSize.h} />
 
-          <div className="flex grow justify-end">
-            <NavLinks showFullMenu={showFullMenu} />
-          </div>
+        <div className="flex grow justify-end">
+          {showFullMenu ? <NavLinks showFullMenu={true} /> : <MobileMenuIcon />}
         </div>
       </div>
     </nav>
@@ -88,32 +96,25 @@ function NavbarLayout({ logoSize, showFullMenu }) {
 }
 
 /* ---------------------------------------------------
-   FRAME (RESPONSIVE SELECTION)
+   MAIN RESPONSIVE NAVBAR
 --------------------------------------------------- */
 export default function Header() {
   const { width } = useActiveBreakpoint();
 
+  // MOBILE MODE
   if (width < 800) {
     return (
       <NavbarLayout
-        logoSize={{ w: 56, h: 35 }}
-        showFullMenu={false}
+        logoSize={{ w: 140, h: 60 }}
+        showFullMenu={false}  
       />
     );
   }
 
-  if (width < 1200) {
-    return (
-      <NavbarLayout
-        logoSize={{ w: 73, h: 46 }}
-        showFullMenu={true}
-      />
-    );
-  }
-
+  // DESKTOP MODE
   return (
     <NavbarLayout
-      logoSize={{ w: 73, h: 46 }}
+      logoSize={{ w: 200, h: 80 }}
       showFullMenu={true}
     />
   );

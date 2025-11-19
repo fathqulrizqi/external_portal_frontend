@@ -1,15 +1,23 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import CoverHero from "../components/Landing/Cover";
+
 export default function PublicLayout() {
+  const location = useLocation();
+
+  // true jika route adalah "/"
+  const isLandingPage = location.pathname === "/";
+
   return (
     <div className="w-full flex flex-col bg-gray-50">
-       {/* NAVBAR */}
-      <header className="w-full py-4 shadow bg-black">
-          <Header />
+      {/* NAVBAR */}
+      <header className="w-full shadow bg-black">
+        <Header />
       </header>
-       <CoverHero />
-      
+
+      {/* SHOW CoverHero only on "/" */}
+      {isLandingPage && <CoverHero />}
+
       <main className="flex-1">
         <Outlet />
       </main>
