@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../../services/auth";
+import imgBackground from "../../assets/images/cover-register.png";
 
 function Login() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
+
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
     setForm({
@@ -14,20 +20,41 @@ function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // sementara console dulu
-    console.log("Login data:", form);
+    try {
+      const result = await login(form);
 
-    // nanti diganti fetch ke API backend lu
-    // await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, { ... })
+      if (!result.success) {
+        setErrorMsg(result.message);
+        return;
+      }
+
+      navigate("/admin/internal");
+    } catch {
+      setErrorMsg("Login failed");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
+    <div className="relative min-h-screen flex items-center justify-center px-4">
+
+      {/* Background Image */}
+      <img
+        src={imgBackground}
+        alt="background"
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
+
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
+
         <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
+
+        {errorMsg && (
+          <p className="text-red-600 text-center mb-3">{errorMsg}</p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -70,6 +97,7 @@ function Login() {
             Daftar
           </Link>
         </p>
+
       </div>
     </div>
   );

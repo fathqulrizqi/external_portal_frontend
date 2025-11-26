@@ -50,6 +50,17 @@ function RegisterButton() {
   );
 }
 
+function LoginButton() {
+  return (
+    <a
+      href="/login"
+      className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black"
+    >
+        Login
+    </a>
+  );
+}
+
 function NavLinks({ showFullMenu }) {
   if (!showFullMenu) return null;
 
@@ -62,9 +73,8 @@ function NavLinks({ showFullMenu }) {
         Payment Order
       </p>
       <Divider />
-      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
-        Login
-      </p>
+     
+      <LoginButton />
       <RegisterButton />
     </div>
   );

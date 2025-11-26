@@ -1,90 +1,221 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { register } from "../../services/auth";
 import imgBackground from "../../assets/images/cover-register.png";
-import { useActiveBreakpoint } from "../../hooks/useBreakpoints";
 
-function InputField({ label }) {
-  return (
-    <div className="flex flex-col gap-1 w-full">
-      <label className="text-sm md:text-base font-semibold">{label}</label>
-      <input
-        type="text"
-        className="
-          bg-white rounded-md px-3 
-          h-[32px] md:h-[38px] lg:h-[42px]
-          shadow-sm
-        "
-      />
-    </div>
-  );
-}
+function Register() {
+  const navigate = useNavigate();
 
-function Sidebar() {
-  return (
-    <div
-      className="
-        bg-[rgba(0,114,125,0.9)] text-white 
-        flex flex-col gap-2
-        p-2 md:p-2 lg:p-8
-        w-full md:w-[160px] lg:w-[210px]
-        rounded-md 
-      "
-    >
-      <p className="text-yellow-300 font-bold">Profile</p>
-      <p className="font-bold">Company</p>
-    </div>
-  );
-}
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    passwordConfirm: "",
+  });
 
+  const [errorMsg, setErrorMsg] = useState("");
+  const [errors, setErrors] = useState({});
 
-export default function Register() {
-  const { breakpoint } = useActiveBreakpoint();
-  console.log("Breakpoint:", breakpoint);
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  return (
-    <div className="relative w-full min-h-screen bg-white flex items-center justify-center">
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setErrors({});
+
+    if (form.password !== form.passwordConfirm) {
+      setErrors({ passwordConfirm: "Password does not match" });
+      return;
+    }
+
+    try {
+      const result = await register(form);
+
+      if (result.status !== "Success") {
+        
+        // Fungsi untuk membersihkan tanda kutip ganda di awal/akhir string (misalnya dari Joi)
+        const cleanMessage = (msg) => msg.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+
+        if (typeof result.errors === "string") {
+          const rawMsg = result.errors;
+          const msg = rawMsg.toLowerCase();
+          const cleanedError = cleanMessage(rawMsg);
+
+          // Cek pesan kesalahan dan tampilkan di bawah field yang relevan
+          if (msg.includes("email")) {
+            setErrors({ email: cleanedError });
+          } else if (msg.includes("phone")) {
+            setErrors({ phone: cleanedError });
+          } else if (msg.includes("password")) {
+            setErrors({ password: cleanedError });
+          } else {
+            // Tampilkan sebagai pesan umum (errorMsg) jika tidak cocok dengan field manapun
+            setErrorMsg(cleanedError);
+          }
+
+          return;
+        }
+
+        if (typeof result.errors === "object" && result.errors !== null) {
+          // Jika BE mengirim objek kesalahan (misalnya { email: "Email is required" })
+          // Kita bersihkan juga pesan di dalamnya
+          const cleanedErrorsObject = Object.fromEntries(
+              Object.entries(result.errors).map(([key, value]) => [key, cleanMessage(String(value))])
+          );
+          setErrors(cleanedErrorsObject);
+          return;
+        }
+        
+        // Fallback untuk kasus di mana result.errors tidak terduga
+        setErrorMsg("Registration failed with an unexpected error structure.");
+        return;
+      }
+
+      // Navigasi setelah sukses
+      navigate("/login");
+    } catch (err) {
+      // PERBAIKAN: Menggunakan objek 'err' dari blok catch
+      const errorMessage = err.response?.data?.errors || err.message || String(err);
       
-      {/* Background */}
+      // Jika terjadi kesalahan jaringan atau server yang tidak terhandle
+      setErrorMsg(`An error occurred: ${errorMessage}`);
+    }
+  };
+
+
+  return (
+    <div className="relative min-h-screen flex items-center justify-center px-4">
       <img
         src={imgBackground}
-        className="absolute inset-0 w-full h-full object-cover z-0"
         alt="background"
+        className="absolute inset-0 w-full h-full object-cover z-0"
       />
 
-      {/* Overlay content */}
-      <div
-        className="
-          relative z-10 
-          w-full max-w-[900px]
-          flex flex-col gap-6
-          p-6 md:p-12
-        "
-      >
-        <h1 className="text-center font-bold text-2xl md:text-3xl">Register</h1>
+      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
+        <h1 className="text-2xl font-bold text-center mb-6">Register</h1>
 
-        <div className="flex flex-col md:flex-row gap-10">
-          {/* Sidebar */}
-          <Sidebar />
+        {/* PESAN KESALAHAN UMUM */}
+        {errorMsg && (
+          <p className="text-red-600 text-center mb-3">{errorMsg}</p>
+        )}
 
-          {/* Form */}
-          <div className="flex flex-col gap-6 w-full">
-            <InputField label="Full Name" />
-            <InputField label="Email" />
-            <InputField label="Password" />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Full Name */}
+          <div>
+            <label className="block font-medium mb-1">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={form.fullName}
+              onChange={handleChange}
+              className={`w-full border px-3 py-2 rounded-lg outline-none ${
+                errors.fullName ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="your full name..."
+            />
+            {errors.fullName && (
+              <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+            )}
           </div>
-        </div>
 
-        <button
-          className="
-            bg-blue-600 text-white 
-            px-4 py-2 
-            rounded-md 
-            w-[120px] 
-            self-center
-            hover:bg-blue-700 transition
-          "
-        >
-          Next
-        </button>
+          {/* Email */}
+          <div>
+            <label className="block font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+             className={`w-full border px-3 py-2 rounded-lg outline-none transition
+              ${errors.email ? "border-red-500 bg-red-50" : "border-gray-300"}
+            `}
+              placeholder="email..."
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block font-medium mb-1">Phone</label>
+            <input
+              type="text"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              className={`w-full border px-3 py-2 rounded-lg outline-none ${
+                errors.phone ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="phone number..."
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block font-medium mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              className={`w-full border px-3 py-2 rounded-lg outline-none ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="password..."
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block font-medium mb-1">Confirm Password</label>
+            <input
+              type="password"
+              name="passwordConfirm"
+              value={form.passwordConfirm}
+              onChange={handleChange}
+              className={`w-full border px-3 py-2 rounded-lg outline-none ${
+                errors.passwordConfirm ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="confirm password..."
+            />
+            {errors.passwordConfirm && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.passwordConfirm}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Register
+          </button>
+        </form>
+
+        <p className="text-center mt-4 text-sm">
+          Sudah punya akun?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Masuk
+          </Link>
+        </p>
       </div>
     </div>
   );
 }
+
+export default Register;
