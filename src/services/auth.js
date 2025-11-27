@@ -1,16 +1,19 @@
 import { API } from "../api";
+import { getClientUUID } from "../utils/device";
 
 export const login = async ({ email, password }) => {
   try {
+    const uuid = getClientUUID(); 
+
     const response = await API.post("users/login", 
       { email, password },
-      { withCredentials: true } 
+      {
+        headers: { "Client-Device-Uuid": uuid },
+        withCredentials: true,
+      }
     );
 
     const data = response.data;
-
-    sessionStorage.setItem("loginStatus", data.status);
-    sessionStorage.setItem("loginMessage", data.message);
 
     return {
       success: true,

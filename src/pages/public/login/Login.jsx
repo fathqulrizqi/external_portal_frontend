@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../services/auth";
-import imgBackground from "../../assets/images/cover-register.png";
+import { login } from "../../../services/auth";
+import imgBackground from "../../../assets/images/cover-register.png";
 
 function Login() {
   const navigate = useNavigate();
@@ -64,8 +64,8 @@ function Login() {
               name="email"
               value={form.email}
               onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-lg focus:ring focus:ring-blue-300 outline-none"
-              placeholder="email kamu..."
+              className="w-full border px-3 py-2 border-gray-300 rounded-lg focus:ring focus:ring-blue-300 outline-none"
+              placeholder="Your Email ..."
               required
             />
           </div>
@@ -77,8 +77,8 @@ function Login() {
               name="password"
               value={form.password}
               onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-lg focus:ring focus:ring-blue-300 outline-none"
-              placeholder="password..."
+              className="w-full border px-3 py-2 border-gray-300 rounded-lg focus:ring focus:ring-blue-300 outline-none"
+              placeholder="Your Password ..."
               required
             />
           </div>
@@ -87,14 +87,14 @@ function Login() {
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
           >
-            Masuk
+            Login
           </button>
         </form>
 
         <p className="text-center mt-4 text-sm">
-          Belum punya akun?{" "}
+          Don't have any account?{" "}
           <Link to="/register" className="text-blue-600 hover:underline">
-            Daftar
+            Register
           </Link>
         </p>
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { register } from "../../services/auth";
-import imgBackground from "../../assets/images/cover-register.png";
+import { register } from "../../../services/auth";
+import imgBackground from "../../../assets/images/cover-register.png";
 
 function Register() {
   const navigate = useNavigate();
