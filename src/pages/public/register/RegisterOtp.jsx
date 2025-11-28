@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { API } from "../../../api";   
 import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
+import Cookies from "universal-cookie";
 
 function RegisterOtp() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
+  const { state } = useLocation();
+  const message = state?.msg;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const { timer, resetTimer, formatTime } = useOtpTimer(120);
@@ -35,7 +38,7 @@ function RegisterOtp() {
     e.preventDefault();
 
     const code = otp.join("");
-
+    console.log("code", code);
     if (code.length !== 6) {
       return setErrorMsg("OTP must be 6 digits.");
     }
@@ -43,9 +46,14 @@ function RegisterOtp() {
     try {
       const { data } = await API.post("/users/OTPRegistrationVerification", { otp: code });
 
-      if (data.success) {
-        navigate("/admin/internal");
-      } else {
+     if (data.success) {
+        if (data.token) {
+          const cookies = new Cookies();
+          cookies.set("token", data.token, { path: "/" });
+        }
+       
+      }
+      else {
         setErrorMsg(data.message);
       }
     } catch {
@@ -58,7 +66,7 @@ const handleResend = async () => {
   setErrorMsg("");
 
   try {
-    await API.post("/user/sendingOTP");
+    await API.post("/users/OTP");
     resetTimer();
     setOtp(["", "", "", "", "", ""]);
     inputRefs.current[0].focus();
@@ -80,6 +88,9 @@ const handleResend = async () => {
       <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
 
         <h1 className="text-2xl font-bold text-center mb-3">OTP Verification</h1>
+         <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-lg text-center">
+          {message}
+        </div>
         <p className="text-center text-gray-600 mb-6">
           Enter the 6-digit OTP sent to your email
         </p>

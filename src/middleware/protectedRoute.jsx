@@ -2,9 +2,11 @@ import { Outlet } from "react-router-dom";
 import useSidebarAuth from "../hooks/useSidebarAuth";
 
 export default function ProtectedRoute() {
-  const sidebar = useSidebarAuth();
+  const { sidebar, loading } = useSidebarAuth();
 
-  if (sidebar === null) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
+
+  if (!sidebar) return null;
 
   return <Outlet />;
 }

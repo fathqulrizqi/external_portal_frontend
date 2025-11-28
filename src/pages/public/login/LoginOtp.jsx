@@ -41,7 +41,7 @@ function LoginOtp() {
     }
 
     try {
-      const { data } = await API.post("/api/user/verifikasiOTP", { otp: code });
+      const { data } = await API.post("/user/verifikasiOTP", { otp: code });
 
       if (data.success) {
         navigate("/admin/internal");
@@ -58,7 +58,7 @@ const handleResend = async () => {
   setErrorMsg("");
 
   try {
-    await API.post("/user/sendingOTP");
+    await API.post("/users/OTP");
     resetTimer();
     setOtp(["", "", "", "", "", ""]);
     inputRefs.current[0].focus();

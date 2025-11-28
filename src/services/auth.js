@@ -1,36 +1,33 @@
 import { API } from "../api";
 import { getClientUUID } from "../utils/device";
+import Cookies from "universal-cookie";
+
 
 export const login = async ({ email, password }) => {
   try {
-    const uuid = getClientUUID(); 
+    const response = await API.post("/users/login", { email, password });
+    const user = response.data.data;
 
-    const response = await API.post("users/login", 
-      { email, password },
-      {
-        headers: { "Client-Device-Uuid": uuid },
-        withCredentials: true,
-      }
-    );
+   const cookies = new Cookies();
+   cookies.set("token", user.token, { path: "/" });
 
-    const data = response.data;
+    console.log("Token yang disimpan:", cookies.get("token"));
+
 
     return {
       success: true,
-      message: data.message
+      message: response.data.message,
     };
 
   } catch (err) {
-    console.log("Login error:", err);
-
-    const msg = err.response?.data?.message || "Login failed";
-
     return {
       success: false,
-      message: msg
+      message: err.response?.data?.message || "Login failed"
     };
   }
 };
+
+
 
 export const register = async ({ fullName, email, password, passwordConfirm, phone }) => {
   try {

@@ -13,11 +13,14 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.13.2",
+    "cookie": "^1.1.1",
     "cors": "^2.8.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
     "tailwindcss": "^4.1.17",
+    "universal": "^0.1.1",
+    "universal-cookie": "^8.0.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

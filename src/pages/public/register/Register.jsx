@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../../services/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
+import { login } from "../../../services/auth";
 
 function Register() {
   const navigate = useNavigate();
@@ -39,7 +40,6 @@ function Register() {
 
       if (result.status !== "Success") {
         
-        // Fungsi untuk membersihkan tanda kutip ganda di awal/akhir string (misalnya dari Joi)
         const cleanMessage = (msg) => msg.replace(/^"|"$/g, '').replace(/\\"/g, '"');
 
         if (typeof result.errors === "string") {
@@ -47,7 +47,6 @@ function Register() {
           const msg = rawMsg.toLowerCase();
           const cleanedError = cleanMessage(rawMsg);
 
-          // Cek pesan kesalahan dan tampilkan di bawah field yang relevan
           if (msg.includes("email")) {
             setErrors({ email: cleanedError });
           } else if (msg.includes("phone")) {
@@ -55,7 +54,6 @@ function Register() {
           } else if (msg.includes("password")) {
             setErrors({ password: cleanedError });
           } else {
-            // Tampilkan sebagai pesan umum (errorMsg) jika tidak cocok dengan field manapun
             setErrorMsg(cleanedError);
           }
 
@@ -63,8 +61,6 @@ function Register() {
         }
 
         if (typeof result.errors === "object" && result.errors !== null) {
-          // Jika BE mengirim objek kesalahan (misalnya { email: "Email is required" })
-          // Kita bersihkan juga pesan di dalamnya
           const cleanedErrorsObject = Object.fromEntries(
               Object.entries(result.errors).map(([key, value]) => [key, cleanMessage(String(value))])
           );
@@ -72,18 +68,22 @@ function Register() {
           return;
         }
         
-        // Fallback untuk kasus di mana result.errors tidak terduga
         setErrorMsg("Registration failed with an unexpected error structure.");
         return;
       }
+        const loginResult = await login({
+          email: form.email,
+          password: form.password
+        });
 
-      // Navigasi setelah sukses
-      navigate("/login");
+        if (loginResult?.tokens?.accessToken) {
+          localStorage.setItem("accessToken", loginResult.tokens.accessToken);
+        }
+
+
     } catch (err) {
-      // PERBAIKAN: Menggunakan objek 'err' dari blok catch
       const errorMessage = err.response?.data?.errors || err.message || String(err);
       
-      // Jika terjadi kesalahan jaringan atau server yang tidak terhandle
       setErrorMsg(`An error occurred: ${errorMessage}`);
     }
   };
