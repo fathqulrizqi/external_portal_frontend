@@ -42,7 +42,6 @@ export default function DashboardExternal() {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-h-screen p-6">
-        {/* Header */}
         <header className="flex justify-between items-center mb-6">
           {/* Mobile sidebar toggle */}
           <button
