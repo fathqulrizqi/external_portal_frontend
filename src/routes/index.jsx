@@ -7,58 +7,55 @@ import AdminExternalLayout from "../layouts/AdminExternalLayout";
 import Landing from "../pages/public/Landing";
 import Login from "../pages/public/login/Login";
 import LoginOtp from "../pages/public/login/LoginOtp";
-import RegisterOtp from "../pages/public/register/RegisterOtp";
 import Register from "../pages/public/register/Register";
+import RegisterOtp from "../pages/public/register/RegisterOtp";
 
 import DashboardInternal from "../pages/admin/internal/DashboardInternal";
 import DashboardExternal from "../pages/admin/external/DashboardExternal";
 
-import ProtectedRoute from "../middleware/protectedRoute";
+import RequireAuth from "../middleware/RequireAuth";
+import GuestOnly from "../middleware/GuestOnly";
+import Header from "../components/Header";
 
 const router = createBrowserRouter([
-  // PUBLIC ROUTES
+  // PUBLIC
   {
     path: "/",
     element: <PublicLayout />,
     children: [
       { index: true, element: <Landing /> },
 
-      // LOGIN
-      { path: "login", element: <Login /> },
-      { path: "login/otp", element: <LoginOtp /> },       
+      { path: "login", element: <GuestOnly><Login /></GuestOnly> },
+      { path: "login/otp", element: <GuestOnly><LoginOtp /></GuestOnly> },
 
-      // REGISTER
-      { path: "register", element: <Register /> },
-      { path: "register/otp", element: <RegisterOtp /> }, 
+      { path: "register", element: <GuestOnly><Register /></GuestOnly> },
+      { path: "register/otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },
     ],
   },
-
 
   // ADMIN INTERNAL
   {
     path: "/admin/internal",
-    element: <ProtectedRoute />,        
+    element: (
+      <RequireAuth>
+        <AdminInternalLayout />
+      </RequireAuth>
+    ),
     children: [
-      {
-        element: <AdminInternalLayout />, 
-        children: [
-          { index: true, element: <DashboardInternal /> },
-        ],
-      },
+      { index: true, element: <DashboardInternal /> },
     ],
   },
 
-  // ADMIN EXTERNAL (vendor)
+  // ADMIN EXTERNAL / vendor
   {
     path: "/admin/external",
-    element: <ProtectedRoute />,        
+    element: (
+      <RequireAuth>
+        <AdminExternalLayout />
+      </RequireAuth>
+    ),
     children: [
-      {
-        element: <AdminExternalLayout />, 
-        children: [
-          { index: true, element: <DashboardExternal /> },
-        ],
-      },
+      { index: true, element: <DashboardExternal /> },
     ],
   },
 ]);

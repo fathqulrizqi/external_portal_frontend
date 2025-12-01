@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Header from "../components/Header";
-import CoverHero from "../components/Landing/Cover";
+import CoverHero from "../components/Content/Cover";
 
 export default function PublicLayout() {
   const location = useLocation();

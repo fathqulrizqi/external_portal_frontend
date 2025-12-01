@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../../../services/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
+import Swal from "sweetalert2";
 
 function Login() {
   const navigate = useNavigate();
@@ -20,26 +21,26 @@ function Login() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const result = await login(form);
+  const result = await login(form);
 
-      if (!result.success) {
-        setErrorMsg(result.message);
-        return;
-      }
-
-      navigate("/admin/internal");
-    } catch {
-      setErrorMsg("Login failed");
+  if (!result.success) {
+    if (result.message === "redirect-register") {
+      alert("Unauthorize!")
+      navigate("/register", { replace: true });
+      return;
     }
-  };
+    setErrorMsg(result.message);
+    return;
+  }
+
+  navigate("/admin/internal");
+};
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4">
-
       {/* Background Image */}
       <img
         src={imgBackground}
@@ -49,7 +50,6 @@ function Login() {
 
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
-
         <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
 
         {errorMsg && (
@@ -97,7 +97,6 @@ function Login() {
             Register
           </Link>
         </p>
-
       </div>
     </div>
   );

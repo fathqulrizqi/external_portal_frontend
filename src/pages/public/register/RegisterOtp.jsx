@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { API } from "../../../api";   
 import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
-import Cookies from "universal-cookie";
+import { getToken } from "../../../utils/cookies";
+import { navigateByRole } from "../../../utils/navigateByRole";
 
 function RegisterOtp() {
   const navigate = useNavigate();
@@ -34,32 +35,35 @@ function RegisterOtp() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const code = otp.join("");
 
-    const code = otp.join("");
-    console.log("code", code);
-    if (code.length !== 6) {
-      return setErrorMsg("OTP must be 6 digits.");
+  if (code.length !== 6) return setErrorMsg("OTP must be 6 digits.");
+
+  try {
+    const token = getToken();
+    const { data } = await API.post(
+      "/users/OTPRegistrationVerification",
+      { otp: code },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (data.success) {
+        alert("Register OTP Valid!");
+
+      const { data: sidebarData } = await API.get("/user/sidebar", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      navigateByRole(sidebarData.data?.roles, navigate);
+    } else {
+      setErrorMsg(data.message);
     }
-
-    try {
-      const { data } = await API.post("/users/OTPRegistrationVerification", { otp: code });
-
-     if (data.success) {
-        if (data.token) {
-          const cookies = new Cookies();
-          cookies.set("token", data.token, { path: "/" });
-        }
-       
-      }
-      else {
-        setErrorMsg(data.message);
-      }
-    } catch {
-      setErrorMsg("Verification failed");
-    }
-  };
+  } catch {
+    setErrorMsg("Verification failed");
+  }
+};
 
 const handleResend = async () => {
   setResending(true);

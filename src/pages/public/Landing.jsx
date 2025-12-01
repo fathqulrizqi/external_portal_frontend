@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import Background from "../../components/Landing/Background";
-import FeatureGallery from "../../components/Landing/FeatureGallery";
+import Background from "../../components/Content/Background";
+import FeatureGallery from "../../components/Content/FeatureGallery";
 
 export default function Landing() {
   return (

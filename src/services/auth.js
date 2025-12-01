@@ -1,32 +1,36 @@
+// src/services/auth.js
 import { API } from "../api";
-import { getClientUUID } from "../utils/device";
-import Cookies from "universal-cookie";
+import { setToken, removeToken } from "../utils/cookies";
 
-
+// src/services/auth.js
 export const login = async ({ email, password }) => {
   try {
     const response = await API.post("/users/login", { email, password });
-    const user = response.data.data;
+    const { token, role } = response.data.data;
 
-   const cookies = new Cookies();
-   cookies.set("token", user.token, { path: "/" });
+    setToken(token);
+    localStorage.setItem("role", JSON.stringify(role));
 
-    console.log("Token yang disimpan:", cookies.get("token"));
-
-
-    return {
-      success: true,
-      message: response.data.message,
-    };
-
+    return { success: true, message: response.data.message };
   } catch (err) {
-    return {
-      success: false,
-      message: err.response?.data?.message || "Login failed"
-    };
+    // cek error di key 'message' atau 'errors'
+    const msg = err.response?.data?.message || err.response?.data?.errors || "Login failed";
+
+    // tandai kalau invalid credentials
+    if (err.response?.status === 401 && msg === "Invalid email or password") {
+      return { success: false, message: "redirect-register" };
+    }
+
+    return { success: false, message: msg };
   }
 };
 
+export const logout = () => {
+  removeToken(); // hapus token
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("userInfo");
+  console.log("User logged out successfully");
+};
 
 
 export const register = async ({ fullName, email, password, passwordConfirm, phone }) => {
@@ -45,11 +49,3 @@ export const register = async ({ fullName, email, password, passwordConfirm, pho
   }
 };
 
-export const logout = () => {
-  try {
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("userInfo");
-  } catch (err) {
-    console.log(err);
-  }
-};

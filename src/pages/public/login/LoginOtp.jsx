@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API } from "../../../api";   
+import { API } from "../../../api";
 import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
+import { navigateByRole } from "../../../utils/navigateByRole";
 
 function LoginOtp() {
   const navigate = useNavigate();
@@ -41,10 +42,19 @@ function LoginOtp() {
     }
 
     try {
-      const { data } = await API.post("/user/verifikasiOTP", { otp: code });
-
+    const token = getToken(); 
+    const { data } = await API.post("/users/OTPVerification", { otp: code }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
       if (data.success) {
-        navigate("/admin/internal");
+        alert("OTP Valid!");
+         const { data: sidebarData } = await API.get("/user/sidebar", {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+        
+              navigateByRole(sidebarData.data?.roles, navigate);
       } else {
         setErrorMsg(data.message);
       }
