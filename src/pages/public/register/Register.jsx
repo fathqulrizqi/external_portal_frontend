@@ -25,69 +25,110 @@ function Register() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setErrors({});
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMsg("");
+  setErrors({});
 
-    if (form.password !== form.passwordConfirm) {
-      setErrors({ passwordConfirm: "Password does not match" });
+  if (form.password !== form.passwordConfirm) {
+    setErrors({ passwordConfirm: "Password does not match" });
+    return;
+  }
+
+  try {
+    const result = await register(form);
+
+    if (result.success && result.message === "registered-and-logged-in") {
+      navigate("/");
+    }
+
+    if (result.status !== "Success") {
+      const cleanMessage = (msg) =>
+        msg.replace(/^"|"$/g, "").replace(/\\"/g, '"');
+
+      if (typeof result.errors === "string") {
+        const rawMsg = result.errors;
+        const msg = rawMsg.toLowerCase();
+        const cleanedError = cleanMessage(rawMsg);
+
+        if (msg.includes("email")) {
+          setErrors({ email: cleanedError });
+        } else if (msg.includes("phone")) {
+          setErrors({ phone: cleanedError });
+        } else if (msg.includes("password")) {
+          setErrors({ password: cleanedError });
+        } else {
+          setErrorMsg(cleanedError);
+        }
+        return;
+      }
+      
+  if (!result.success) {
+    if (result.message === "redirect-login") {
+      alert("Already registered!");
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (result.message === "redirect-register-otp") {
+      alert("Account is not active!");
+      navigate("/register/otp", { replace: true });
+      return;
+    }
+    
+    setErrorMsg(result.message);
+    return;
+  }
+
+      if (typeof result.errors === "object" && result.errors !== null) {
+        const cleanedErrorsObject = Object.fromEntries(
+          Object.entries(result.errors).map(([key, value]) => [
+            key,
+            cleanMessage(String(value)),
+          ])
+        );
+        setErrors(cleanedErrorsObject);
+        return;
+      }
+
+      setErrorMsg("Registration failed with an unexpected error structure.");
       return;
     }
 
-    try {
-      const result = await register(form);
+    // Register sukses → panggil fungsi login yang sudah ada
+    await handleLoginAfterRegister({
+      email: form.email,
+      password: form.password,
+    });
 
-      if (result.status !== "Success") {
-        
-        const cleanMessage = (msg) => msg.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+  } catch (err) {
+    const errorMessage = err.response?.data?.errors || err.message || String(err);
+    setErrorMsg(`An error occurred: ${errorMessage}`);
+  }
+};
 
-        if (typeof result.errors === "string") {
-          const rawMsg = result.errors;
-          const msg = rawMsg.toLowerCase();
-          const cleanedError = cleanMessage(rawMsg);
+// bisa buat helper
+const handleLoginAfterRegister = async (form) => {
+  const result = await login(form); 
 
-          if (msg.includes("email")) {
-            setErrors({ email: cleanedError });
-          } else if (msg.includes("phone")) {
-            setErrors({ phone: cleanedError });
-          } else if (msg.includes("password")) {
-            setErrors({ password: cleanedError });
-          } else {
-            setErrorMsg(cleanedError);
-          }
-
-          return;
-        }
-
-        if (typeof result.errors === "object" && result.errors !== null) {
-          const cleanedErrorsObject = Object.fromEntries(
-              Object.entries(result.errors).map(([key, value]) => [key, cleanMessage(String(value))])
-          );
-          setErrors(cleanedErrorsObject);
-          return;
-        }
-        
-        setErrorMsg("Registration failed with an unexpected error structure.");
-        return;
-      }
-        const loginResult = await login({
-          email: form.email,
-          password: form.password
-        });
-
-        if (loginResult?.tokens?.accessToken) {
-          localStorage.setItem("accessToken", loginResult.tokens.accessToken);
-        }
-
-
-    } catch (err) {
-      const errorMessage = err.response?.data?.errors || err.message || String(err);
-      
-      setErrorMsg(`An error occurred: ${errorMessage}`);
+  if (!result.success) {
+    if (result.message === "redirect-register") {
+      alert("Unauthorize!");
+      navigate("/register", { replace: true });
+      return;
     }
-  };
+    if (result.message === "redirect-register-otp") {
+      alert("Account is not active!");
+      navigate("/register/otp", { replace: true });
+      return;
+    }
+    
+    setErrorMsg(result.message);
+    return;
+  }
 
+  // login sukses
+  navigate("/admin/internal");
+};
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4">

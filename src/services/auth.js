@@ -35,17 +35,33 @@ export const logout = () => {
 
 export const register = async ({ fullName, email, password, passwordConfirm, phone }) => {
   try {
-    const { data } = await API.post("/users/register", {
+    const res = await API.post("/users/register", {
       fullName,
       email,
       password,
       passwordConfirm,
       phone
     });
-    return data;
+
+    // auto-login
+    const loginRes = await API.post("/users/login", { email, password });
+    const { token, role } = loginRes.data.data;
+
+    setToken(token);
+    localStorage.setItem("role", JSON.stringify(role));
+
+    return { success: true, message: "registered-and-logged-in" };
+
   } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.errors || "Login failed";
+
+    // tandai kalau invalid credentials
+    if (err.response?.status === 500 && msg === "Email already registered") {
+      return { success: false, message: "redirect-login" };
+    }
     console.log(err);
-    throw err;
+    return { success: false, message: err.response?.data?.message || "Failed" };
   }
 };
+
 
