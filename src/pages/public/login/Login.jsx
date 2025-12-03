@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../../services/auth";
+import { login } from "../../../api/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
 import Swal from "sweetalert2";
-
+import { setRole } from "../../../utils/cookies";
+import { navigateByRole } from "../../../utils/navigateByRole";
 function Login() {
   const navigate = useNavigate();
 
@@ -27,8 +28,13 @@ const handleSubmit = async (e) => {
   const result = await login(form);
 
   if (!result.success) {
+    if (result.message === "redirect-login") {
+      alert("Invalid Email or Password!")
+      navigate("/login", { replace: true });
+      return;
+    } 
     if (result.message === "redirect-register") {
-      alert("Unauthorize!")
+      alert("You don't have an account, please register!")
       navigate("/register", { replace: true });
       return;
     }
@@ -36,7 +42,8 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  navigate("/admin/internal");
+  const role = JSON.parse(localStorage.getItem("role")); 
+  navigateByRole(role, navigate);
 };
 
   return (

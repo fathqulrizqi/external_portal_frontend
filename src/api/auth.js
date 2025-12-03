@@ -1,6 +1,6 @@
 // src/services/auth.js
-import { API } from "../api";
-import { setToken, removeToken } from "../utils/cookies";
+import { API } from ".";
+import { setToken, removeToken, removeRole } from "../utils/cookies";
 
 // src/services/auth.js
 export const login = async ({ email, password }) => {
@@ -13,11 +13,13 @@ export const login = async ({ email, password }) => {
 
     return { success: true, message: response.data.message };
   } catch (err) {
-    // cek error di key 'message' atau 'errors'
     const msg = err.response?.data?.message || err.response?.data?.errors || "Login failed";
 
-    // tandai kalau invalid credentials
     if (err.response?.status === 401 && msg === "Invalid email or password") {
+      return { success: false, message: "redirect-login" };
+    }
+
+     if (err.response?.status === 404 && msg === "You don't have an account,please register!!") {
       return { success: false, message: "redirect-register" };
     }
 
@@ -27,9 +29,9 @@ export const login = async ({ email, password }) => {
 
 export const logout = () => {
   removeToken(); 
-  sessionStorage.removeItem("accessToken");
-  sessionStorage.removeItem("userInfo");
-  console.log("User logged out successfully");
+  removeRole();
+  localStorage.removeItem("role");
+  alert("Logout Successfully!")
 };
 
 

@@ -67,11 +67,12 @@ function LoginOtp() {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const roles = sidebarData.data?.roles || [];
+    if (data.errors == "New Device Detected/Session Device Expired. Please verify login via email.") {
+      navigate("/");
+    }
 
-    setRole(roles);
-
-    navigateByRole(roles, navigate);
+    const role = JSON.parse(localStorage.getItem("role")); 
+    navigateByRole(role, navigate);
 
   } catch (err) {
     console.log(err);
