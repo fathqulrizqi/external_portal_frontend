@@ -49,7 +49,7 @@ const handleSubmit = async (e) => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    if (data.success) {
+    if (data.status === "Success") {
         alert("Register OTP Valid!");
 
       const { data: sidebarData } = await API.get("/user/sidebar", {

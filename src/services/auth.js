@@ -26,7 +26,7 @@ export const login = async ({ email, password }) => {
 };
 
 export const logout = () => {
-  removeToken(); // hapus token
+  removeToken(); 
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("userInfo");
   console.log("User logged out successfully");
@@ -64,4 +64,34 @@ export const register = async ({ fullName, email, password, passwordConfirm, pho
   }
 };
 
+
+export const OTPRegistrationVerification = async ({ otp }) => {
+  try {
+    const token = getToken();
+
+    const { data } = await API.post(
+      "/users/OTPVerification",
+      { otp },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const isSuccess = data?.status === "Success" || data?.success === true;
+
+    return {
+      success: isSuccess,
+      message: data?.message || null,
+      raw: data,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: "Verification failed",
+      raw: err,
+    };
+  }
+};
 
