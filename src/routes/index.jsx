@@ -1,8 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
-import AdminInternalLayout from "../layouts/AdminInternalLayout";
-import AdminExternalLayout from "../layouts/AdminExternalLayout";
+import AdminExternalLayout from "../layouts/DashboardLayout";
 
 import Landing from "../pages/public/Landing";
 import Login from "../pages/public/login/Login";
@@ -16,6 +15,8 @@ import DashboardExternal from "../pages/admin/external/DashboardExternal";
 import RequireAuth from "../middleware/RequireAuth";
 import GuestOnly from "../middleware/GuestOnly";
 import Header from "../components/Header";
+import ExternalLayout from "../layouts/ExternalLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 const router = createBrowserRouter([
   // PUBLIC
@@ -33,31 +34,20 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ADMIN INTERNAL
+  // EXTERNAL PORTAL
   {
-    path: "/admin/internal",
+    path: "/external-portal",
     element: (
       <RequireAuth>
-        <AdminInternalLayout />
+        <ExternalLayout />
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardInternal /> },
+      { index: true, element: <ExternalLayout /> },
+      { index: "/dashboard", element: <DashboardLayout /> },
     ],
   },
 
-  // ADMIN EXTERNAL / vendor
-  {
-    path: "/admin/external",
-    element: (
-      <RequireAuth>
-        <AdminExternalLayout />
-      </RequireAuth>
-    ),
-    children: [
-      { index: true, element: <DashboardExternal /> },
-    ],
-  },
 ]);
 
 export default router;

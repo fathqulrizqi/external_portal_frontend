@@ -3,7 +3,7 @@ import { Outlet, Link, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import Swal from "sweetalert2";
 
-export default function AdminExternalLayout() {
+export default function DashboardLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export default function AdminExternalLayout() {
       >
         <h2 className="text-xl font-semibold mb-6">External Admin</h2>
         <nav className="space-y-3">
-          <Link to="/admin/external" className="block px-3 py-2 rounded-lg hover:bg-gray-200">Dashboard</Link>
+          <Link to="/" className="block px-3 py-2 rounded-lg hover:bg-gray-200">Dashboard</Link>
           <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">Users</Link>
           <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">Settings</Link>
         </nav>

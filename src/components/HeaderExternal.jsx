@@ -1,27 +1,15 @@
 import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import imgLogoNiterra from "../assets/images/Logo-Niterra-01.png";
-import { Link } from "react-router-dom";
-/* ---------------------------------------------------
-   HOOK: BREAKPOINT
---------------------------------------------------- */
-function useActiveBreakpoint() {
-  const [width, setWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-
-  return { width };
-}
+import Swal from "sweetalert2";
+import { useActiveBreakpoint } from "../hooks/useBreakpoints";
 
 /* ---------------------------------------------------
    COMPONENTS
 --------------------------------------------------- */
 function Logo({ width, height }) {
   return (
-    <Link to="/" className="block">
+    <Link to="/external-portal" className="block">
       <div style={{ width, height }} className="relative shrink-0 cursor-pointer">
         <img
           src={imgLogoNiterra}
@@ -37,49 +25,39 @@ function Divider() {
   return <div className="bg-[#f9b000] h-[22px] w-px shrink-0" />;
 }
 
-function RegisterButton() {
+function LogoutButton() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, log out",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      Cookies.remove("token", { path: "/" });
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("userInfo");
+
+      navigate("/", { replace: true });
+    }
+  };
+
   return (
-    <a
-      href="/register"
+    <button
+      onClick={handleLogout}
       className="bg-[#00727d] px-[8px] py-[4px] flex items-center justify-center shrink-0"
     >
       <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-white">
-        Register
+        Logout
       </p>
-    </a>
+    </button>
   );
 }
-
-function LoginButton() {
-  return (
-    <a
-      href="/login"
-      className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black"
-    >
-        Login
-    </a>
-  );
-}
-
-function NavLinks({ showFullMenu }) {
-  if (!showFullMenu) return null;
-
-  return (
-    <div className="flex items-center gap-[19px]">
-      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
-        E-Bidding
-      </p>
-      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
-        Payment Order
-      </p>
-      <Divider />
-     
-      <LoginButton />
-      <RegisterButton />
-    </div>
-  );
-}
-
 
 function NavLinksExternal ({ showFullMenu }) {
   if (!showFullMenu) return null;
@@ -94,8 +72,7 @@ function NavLinksExternal ({ showFullMenu }) {
       </p>
       <Divider />
      
-      <LoginButton />
-      <RegisterButton />
+      <LogoutButton />
     </div>
   );
 }
@@ -115,14 +92,14 @@ function NavbarLayout({ logoSize, showFullMenu }) {
         <Logo width={logoSize.w} height={logoSize.h} />
 
         <div className="flex grow justify-end">
-          {showFullMenu ? <NavLinks showFullMenu={true} /> : <MobileMenuIcon />}
+          {showFullMenu ? <NavLinksExternal showFullMenu={true} /> : <MobileMenuIcon />}
         </div>
       </div>
     </nav>
   );
 }
 
-export default function Header() {
+export default function HeaderExternal() {
   const { width } = useActiveBreakpoint();
 
   // MOBILE MODE

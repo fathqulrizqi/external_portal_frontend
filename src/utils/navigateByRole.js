@@ -7,9 +7,9 @@ export function navigateByRole(role, navigate) {
   }
 
   if (role.includes("admin")) {
-    navigate("/admin/internal", { replace: true });
+    navigate("/external-portal", { replace: true });
   } else if (role.includes("user")) {
-    navigate("/admin/external", { replace: true });
+    navigate("/external-portal", { replace: true });
   } else {
     navigate("/", { replace: true });
   }

@@ -24,7 +24,7 @@ export default function useSidebarAuth() {
 
           // navigasi sesuai role
           if (roles.includes("admin")) navigate("/admin/internal", { replace: true });
-          else navigate("/admin/external", { replace: true });
+          else navigate("/external-portal", { replace: true });
 
           setSidebar(data.data);
         }
