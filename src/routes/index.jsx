@@ -1,21 +1,16 @@
-import { createBrowserRouter } from "react-router-dom";
-
+import { createBrowserRouter  } from "react-router-dom";
 import PublicLayout from "../layouts/PublicLayout";
-import AdminInternalLayout from "../layouts/AdminInternalLayout";
-import AdminExternalLayout from "../layouts/AdminExternalLayout";
-
 import Landing from "../pages/public/Landing";
-import Login from "../pages/public/login/Login";
-import LoginOtp from "../pages/public/login/LoginOtp";
-import Register from "../pages/public/register/Register";
-import RegisterOtp from "../pages/public/register/RegisterOtp";
-
-import DashboardInternal from "../pages/admin/internal/DashboardInternal";
-import DashboardExternal from "../pages/admin/external/DashboardExternal";
-
+import Login from "../pages/public/auth/Login";
+import LoginOtp from "../pages/public/auth/LoginOtp";
+import Register from "../pages/public/auth/Register";
+import RegisterOtp from "../pages/public/auth/RegisterOtp";
 import RequireAuth from "../middleware/RequireAuth";
 import GuestOnly from "../middleware/GuestOnly";
-import Header from "../components/Header";
+import ExternalLayout from "../layouts/ExternalLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
+import ResetPassword from "../pages/public/auth/ResetPassword";
+import ResetPasswordConfirmation from "../pages/public/auth/ResetPasswordConfirmation";
 
 const router = createBrowserRouter([
   // PUBLIC
@@ -24,6 +19,8 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [
       { index: true, element: <Landing /> },
+      { path: "reset-password", element:<ResetPassword /> },
+      { path: "new-password", element: <ResetPasswordConfirmation /> },
 
       { path: "login", element: <GuestOnly><Login /></GuestOnly> },
       { path: "login/otp", element: <GuestOnly><LoginOtp /></GuestOnly> },
@@ -32,32 +29,36 @@ const router = createBrowserRouter([
       { path: "register/otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },
     ],
   },
-
-  // ADMIN INTERNAL
   {
-    path: "/admin/internal",
+    path: "/external-portal",
     element: (
       <RequireAuth>
-        <AdminInternalLayout />
+        <ExternalLayout />
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardInternal /> },
+      { index: true, element: <ExternalLayout /> },
+      { path: ":menu", element: <DashboardLayout /> },
     ],
   },
 
-  // ADMIN EXTERNAL / vendor
+
   {
-    path: "/admin/external",
+    path: "/dashboard",
     element: (
       <RequireAuth>
-        <AdminExternalLayout />
+        <DashboardLayout />
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <DashboardExternal /> },
+      // dashboard utama
+      { index: true, element: <DashboardLayout /> },
+
+      // dynamic child page
+      { path: ":menu", element: <DashboardLayout /> },
     ],
   },
+
 ]);
 
 export default router;

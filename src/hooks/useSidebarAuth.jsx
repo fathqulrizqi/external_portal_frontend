@@ -24,7 +24,7 @@ export default function useSidebarAuth() {
 
           // navigasi sesuai role
           if (roles.includes("admin")) navigate("/admin/internal", { replace: true });
-          else navigate("/admin/external", { replace: true });
+          else navigate("/external-portal", { replace: true });
 
           setSidebar(data.data);
         }
@@ -78,8 +78,35 @@ export default function useSidebarAuth() {
             console.log("Failed to request OTP:", err);
           }
         }
+        
 
   // baru redirect ke login OTP
+  navigate("/login/otp", {
+    replace: true,
+    state: { msg: "Your session has expired. OTP has been sent to your email." },
+  });
+}
+
+ if (status === 403 && errors === "New Device Detected/Session Device Expired. Please verify login via email.") {
+        getToken();
+
+        if (token) {
+          try {
+            await API.post(
+              "/users/OTP",
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          } catch (err) {
+            console.log("Failed to request OTP:", err);
+          }
+        }
+        
+
   navigate("/login/otp", {
     replace: true,
     state: { msg: "Your session has expired. OTP has been sent to your email." },

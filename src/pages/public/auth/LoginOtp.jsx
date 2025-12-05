@@ -4,7 +4,7 @@ import { API } from "../../../api";
 import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
 import { navigateByRole } from "../../../utils/navigateByRole";
-
+import { getToken, setToken, setRole } from "../../../utils/cookies";
 function LoginOtp() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
@@ -33,35 +33,53 @@ function LoginOtp() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const code = otp.join("");
+  const code = otp.join("");
 
-    if (code.length !== 6) {
-      return setErrorMsg("OTP must be 6 digits.");
+  if (code.length !== 6) {
+    return setErrorMsg("OTP must be 6 digits.");
+  }
+
+  try {
+    // ambil token yang sudah disimpan waktu login
+    const token = getToken();
+
+    // verifikasi OTP
+    const { data } = await API.post(
+      "/users/OTPVerification",
+      { otp: code },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (data.status !== "Success") {
+      return setErrorMsg(data.message);
     }
 
-    try {
-    const token = getToken(); 
-    const { data } = await API.post("/users/OTPVerification", { otp: code }, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    alert("OTP Valid!");
+
+    // GET role user dari backend
+    const { data: sidebarData } = await API.get("/user/sidebar", {
+      headers: { Authorization: `Bearer ${token}` },
     });
-      if (data.success) {
-        alert("OTP Valid!");
-         const { data: sidebarData } = await API.get("/user/sidebar", {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-        
-              navigateByRole(sidebarData.data?.roles, navigate);
-      } else {
-        setErrorMsg(data.message);
-      }
-    } catch {
-      setErrorMsg("Verification failed");
+
+    if (data.errors == "New Device Detected/Session Device Expired. Please verify login via email.") {
+      navigate("/");
     }
-  };
+
+    const role = JSON.parse(localStorage.getItem("role")); 
+    navigateByRole(role, navigate);
+
+  } catch (err) {
+    console.log(err);
+    setErrorMsg("Verification failed");
+  }
+};
+
 
 const handleResend = async () => {
   setResending(true);

@@ -6,7 +6,7 @@ import useSidebarAuth from "../hooks/useSidebarAuth";
 export default function RequireAuth() {
   const token = getToken();
 
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/" replace />;
 
   const { loading } = useSidebarAuth(token);
 
