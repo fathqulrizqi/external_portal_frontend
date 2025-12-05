@@ -1,15 +1,16 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter  } from "react-router-dom";
 import PublicLayout from "../layouts/PublicLayout";
 import Landing from "../pages/public/Landing";
-import Login from "../pages/public/login/Login";
-import LoginOtp from "../pages/public/login/LoginOtp";
-import Register from "../pages/public/register/Register";
-import RegisterOtp from "../pages/public/register/RegisterOtp";
+import Login from "../pages/public/auth/Login";
+import LoginOtp from "../pages/public/auth/LoginOtp";
+import Register from "../pages/public/auth/Register";
+import RegisterOtp from "../pages/public/auth/RegisterOtp";
 import RequireAuth from "../middleware/RequireAuth";
 import GuestOnly from "../middleware/GuestOnly";
 import ExternalLayout from "../layouts/ExternalLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
-import ResetPassword from "../pages/public/login/ResetPassword";
+import ResetPassword from "../pages/public/auth/ResetPassword";
+import ResetPasswordConfirmation from "../pages/public/auth/ResetPasswordConfirmation";
 
 const router = createBrowserRouter([
   // PUBLIC
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Landing /> },
       { path: "reset-password", element:<ResetPassword /> },
+      { path: "new-password", element: <ResetPasswordConfirmation /> },
 
       { path: "login", element: <GuestOnly><Login /></GuestOnly> },
       { path: "login/otp", element: <GuestOnly><LoginOtp /></GuestOnly> },

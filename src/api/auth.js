@@ -52,12 +52,41 @@ export const resetPassword = async ( email ) => {
     return { success: false, message: msg };
   }
 };
+
 export const logout = () => {
   removeToken(); 
   removeRole();
   localStorage.removeItem("role");
   alert("Logout Successfully!")
 };
+
+export const resetPasswordConfirmation = async (password, passwordConfirm, token) => {
+  try {
+    if (!token) {
+      return { success: false, message: "Invalid or missing token" };
+    }
+
+    const response = await API.post(
+      `/forgotPassword?token=${token}`,
+      { password, passwordConfirm }
+    );
+
+    return { success: true, message: response.data.message };
+
+  } catch (err) {
+    const msg =
+      err.response?.data?.message ||
+      err.response?.data?.errors ||
+      "Request failed";
+
+    if (err.response?.status === 500) {
+      return { success: false, message: "error-alert" };
+    }
+
+    return { success: false, message: msg };
+  }
+};
+
 
 export const register = async ({ fullName, email, password, passwordConfirm, phone }) => {
   try {
