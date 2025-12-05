@@ -34,8 +34,7 @@ const handleSubmit = async (e) => {
       return;
     } 
     if (result.message === "redirect-register") {
-      alert("You don't have an account, please register!")
-      navigate("/register", { replace: true });
+      alert("Invalid email. Check your email. If you don't have account, please register!")
       return;
     }
     setErrorMsg(result.message);
@@ -89,7 +88,9 @@ const handleSubmit = async (e) => {
               required
             />
           </div>
-
+          <Link to="/reset-password" className="text-blue-600 mb-2 hover:underline">
+          Forgot Password? 
+          </Link>
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"

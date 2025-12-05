@@ -1,6 +1,6 @@
 // src/services/auth.js
 import { API } from ".";
-import { setToken, removeToken, removeRole } from "../utils/cookies";
+import { setToken, removeToken, removeRole, getToken } from "../utils/cookies";
 
 // src/services/auth.js
 export const login = async ({ email, password }) => {
@@ -12,21 +12,46 @@ export const login = async ({ email, password }) => {
     localStorage.setItem("role", JSON.stringify(role));
 
     return { success: true, message: response.data.message };
-  } catch (err) {
-    const msg = err.response?.data?.message || err.response?.data?.errors || "Login failed";
 
+  } catch (err) {
+    const msg =
+      err.response?.data?.message ||
+      err.response?.data?.errors ||
+      "Login failed";
+
+    // credentials salah
     if (err.response?.status === 401 && msg === "Invalid email or password") {
       return { success: false, message: "redirect-login" };
     }
 
-     if (err.response?.status === 404 && msg === "You don't have an account,please register!!") {
+    // akun belum dibuat
+    if (err.response?.status === 404 && msg === "You don't have an account,please register!!") {
       return { success: false, message: "redirect-register" };
+    }
+
+    // akun ada tapi belum OTP verify
+    if (msg === "Account is not active") {
+      return { success: false, message: "redirect-register-otp" };
     }
 
     return { success: false, message: msg };
   }
 };
 
+export const resetPassword = async ( email ) => {
+  try {
+    const response = await API.post("/forgotPasswordSendingEmail", { email });
+
+    return { success: true, message: response.data.message };
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.errors || "Login failed";
+
+     if (err.response?.status === 500 ) {
+      return { success: false, message: "error-alert" };
+    }
+    return { success: false, message: msg };
+  }
+};
 export const logout = () => {
   removeToken(); 
   removeRole();
@@ -34,37 +59,32 @@ export const logout = () => {
   alert("Logout Successfully!")
 };
 
-
 export const register = async ({ fullName, email, password, passwordConfirm, phone }) => {
   try {
-    const res = await API.post("/users/register", {
+    await API.post("/users/register", {
       fullName,
       email,
       password,
       passwordConfirm,
-      phone
+      phone,
     });
 
-    // auto-login
-    const loginRes = await API.post("/users/login", { email, password });
-    const { token, role } = loginRes.data.data;
-
-    setToken(token);
-    localStorage.setItem("role", JSON.stringify(role));
-
-    return { success: true, message: "registered-and-logged-in" };
+    return { success: true, message: "registered" };
 
   } catch (err) {
-    const msg = err.response?.data?.message || err.response?.data?.errors || "Login failed";
+    const msg =
+      err.response?.data?.message ||
+      err.response?.data?.errors ||
+      "Registration failed";
 
-    // tandai kalau invalid credentials
     if (err.response?.status === 500 && msg === "Email already registered") {
       return { success: false, message: "redirect-login" };
     }
-    console.log(err);
-    return { success: false, message: err.response?.data?.message || "Failed" };
+
+    return { success: false, message: msg };
   }
 };
+
 
 
 export const OTPRegistrationVerification = async ({ otp }) => {

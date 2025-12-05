@@ -6,7 +6,7 @@ export const getSidebar = async () => {
 
     return { 
       success: true, 
-      data: response.data.data,  // langsung isi datanya
+      data: response.data.data, 
       message: response.data.message 
     };
   } catch (err) {

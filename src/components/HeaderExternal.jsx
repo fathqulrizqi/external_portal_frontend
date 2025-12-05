@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import imgLogoNiterra from "../assets/images/Logo-Niterra-01.png";
 import Swal from "sweetalert2";
 import { useActiveBreakpoint } from "../hooks/useBreakpoints";
+import { removeToken } from "../utils/cookies";
 
 /* ---------------------------------------------------
    COMPONENTS
@@ -39,7 +40,7 @@ function LogoutButton() {
     });
 
     if (result.isConfirmed) {
-      Cookies.remove("token", { path: "/" });
+      removeToken();
       sessionStorage.removeItem("accessToken");
       sessionStorage.removeItem("userInfo");
 

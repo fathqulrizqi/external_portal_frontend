@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../../api/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
 import { login } from "../../../api/auth";
+import { navigateByRole } from "../../../utils/navigateByRole";
 
 function Register() {
   const navigate = useNavigate();
@@ -35,76 +36,47 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  try {
-    const result = await register(form);
+  const result = await register(form);
 
-    if (result.success && result.message === "registered-and-logged-in") {
-      navigate("/");
-    }
-
-    if (result.status !== "Success") {
-      const cleanMessage = (msg) =>
-        msg.replace(/^"|"$/g, "").replace(/\\"/g, '"');
-
-      if (typeof result.errors === "string") {
-        const rawMsg = result.errors;
-        const msg = rawMsg.toLowerCase();
-        const cleanedError = cleanMessage(rawMsg);
-
-        if (msg.includes("email")) {
-          setErrors({ email: cleanedError });
-        } else if (msg.includes("phone")) {
-          setErrors({ phone: cleanedError });
-        } else if (msg.includes("password")) {
-          setErrors({ password: cleanedError });
-        } else {
-          setErrorMsg(cleanedError);
-        }
-        return;
-      }
-      
   if (!result.success) {
     if (result.message === "redirect-login") {
       alert("Already registered!");
-      navigate("/login", { replace: true });
+      navigate("/login");
       return;
     }
-    if (result.message === "redirect-register-otp") {
-      alert("Account is not active!");
-      navigate("/register/otp", { replace: true });
-      return;
-    }
-    
+
     setErrorMsg(result.message);
     return;
   }
 
-      if (typeof result.errors === "object" && result.errors !== null) {
-        const cleanedErrorsObject = Object.fromEntries(
-          Object.entries(result.errors).map(([key, value]) => [
-            key,
-            cleanMessage(String(value)),
-          ])
-        );
-        setErrors(cleanedErrorsObject);
-        return;
-      }
+  // === REGISTER SUCCESS → AUTO-LOGIN ===
+  const loginRes = await login({
+    email: form.email,
+    password: form.password,
+  });
 
-      setErrorMsg("Registration failed with an unexpected error structure.");
+  if (!loginRes.success) {
+    if (loginRes.message === "redirect-register-otp") {
+      alert("Account is not active!");
+      navigate("/register/otp");
       return;
     }
 
-    // Register sukses → panggil fungsi login yang sudah ada
-    await handleLoginAfterRegister({
-      email: form.email,
-      password: form.password,
-    });
+    if (loginRes.message === "redirect-login") {
+      alert("Invalid credentials!");
+      navigate("/login");
+      return;
+    }
 
-  } catch (err) {
-    const errorMessage = err.response?.data?.errors || err.message || String(err);
-    setErrorMsg(`An error occurred: ${errorMessage}`);
+    setErrorMsg(loginRes.message);
+    return;
   }
+
+  // === LOGIN SUCCESS ===
+  const role = JSON.parse(localStorage.getItem("role"));
+  navigateByRole(role, navigate);
 };
+
 
 // bisa buat helper
 const handleLoginAfterRegister = async (form) => {
