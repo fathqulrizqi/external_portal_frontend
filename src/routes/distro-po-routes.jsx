@@ -1,5 +1,4 @@
 import DistroPoLandingPage from "../pages/distro-po/landingPage";
-import PublicLayout from "../layouts/PublicLayout";
 import DistroPoLandingPage2 from "../pages/distro-po/landing2";
 import DistributorPOForm from "../pages/distro-po/form";
 import POList from "../pages/distro-po/POList";
@@ -38,6 +37,7 @@ export const DistroPoRoutes = [{
             // PAGES
             { path: "form", element: <DistributorPOForm /> },
             { path: "list", element: <POList /> },
+            { path: "summary", element: <POSummary /> },
             { path: "masteritem", element: <MasterItemPage /> },
           ],
         },

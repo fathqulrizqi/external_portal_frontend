@@ -54,6 +54,9 @@ export default function DashboardLayout() {
           <Link to="/distro-po/dashboard/list" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
             Distro PO List
           </Link>
+          <Link to="/distro-po/dashboard/summary" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+            Summary
+          </Link>
           <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
             Users
           </Link>
