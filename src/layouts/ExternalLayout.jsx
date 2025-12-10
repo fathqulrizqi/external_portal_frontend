@@ -1,7 +1,6 @@
 import imgCover from "../assets/images/cover-register.png";
 import HeaderExternal from "../components/HeaderExternal";
 import { useActiveBreakpoint } from "../hooks/useBreakpoints";
-import useSidebarAuth from "../hooks/useSidebarAuth";
 import { useEffect, useState } from "react";
 import { getSidebar } from "../api/portal-external";
 import { useNavigate } from "react-router-dom";
@@ -97,19 +96,7 @@ function AppsSection({ sidebar }) {
 
 function ExternalLayout() {
   const { width } = useActiveBreakpoint();
-   const [sidebarData, setSidebarData] = useState([]);
-
-  useEffect(() => {
-    getSidebar().then((res) => {
-      if (res.success) {
-        console.log("Sidebar:", res.data);
-        setSidebarData(res.data); // <-- SAVE DATA
-      } else {
-        console.warn(res.message);
-      }
-    });
-  }, []);
-
+   
   const titleSize =
     width < 800 ? "text-[20px]" : width < 1280 ? "text-[30px]" : "text-[45px]";
 

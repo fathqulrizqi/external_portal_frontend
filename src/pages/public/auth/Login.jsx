@@ -48,7 +48,7 @@ const handleSubmit = async (e) => {
   }
 
   const role = JSON.parse(localStorage.getItem("role")); 
-  navigateByRole(role, navigate);
+  navigateByRole(role, navigate, appName);
 };
 
   return (

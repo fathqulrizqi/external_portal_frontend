@@ -9,6 +9,10 @@ function LoginOtp() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
+  const segment = location.pathname.split("/")[1]; 
+  const appName = segment || "public";
+  const basePath = `/${appName}`;
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const { timer, resetTimer, formatTime } = useOtpTimer(120);
   const [errorMsg, setErrorMsg] = useState("");
@@ -62,17 +66,8 @@ function LoginOtp() {
 
     alert("OTP Valid!");
 
-    // GET role user dari backend
-    const { data: sidebarData } = await API.get("/user/sidebar", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (data.errors == "New Device Detected/Session Device Expired. Please verify login via email.") {
-      navigate("/");
-    }
-
     const role = JSON.parse(localStorage.getItem("role")); 
-    navigateByRole(role, navigate);
+    navigateByRole(role, navigate, appName);
 
   } catch (err) {
     console.log(err);

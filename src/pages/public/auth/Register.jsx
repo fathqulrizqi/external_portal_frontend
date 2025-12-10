@@ -54,23 +54,30 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  // === REGISTER SUCCESS → AUTO-LOGIN ===
+  // === SAVE TEMP REGISTER DATA FOR OTP PAGE ===
+  sessionStorage.setItem("tempRegister", JSON.stringify({
+    email: form.email,
+    password: form.password,
+    application: form.application,
+  }));
+
+  // === TRY AUTO LOGIN (backend will force OTP if not active) ===
   const loginRes = await login({
     email: form.email,
     password: form.password,
+    application: form.application,
   });
 
   if (!loginRes.success) {
     if (loginRes.message === "redirect-register-otp") {
       alert("Account is not active!");
-      navigate(`${basePath}/register/otp`, { replace: true });
+      navigate(`${basePath}/register-otp`, { replace: true });
       return;
     }
 
     if (loginRes.message === "redirect-login") {
       alert("Invalid credentials!");
       navigate(`${basePath}/login`, { replace: true });
-
       return;
     }
 
@@ -80,33 +87,10 @@ const handleSubmit = async (e) => {
 
   // === LOGIN SUCCESS ===
   const role = JSON.parse(localStorage.getItem("role"));
-  navigateByRole(role, navigate);
+
+  navigateByRole(role, navigate, appName);
 };
 
-
-// bisa buat helper
-const handleLoginAfterRegister = async (form) => {
-  const result = await login(form); 
-
-  if (!result.success) {
-    if (result.message === "redirect-register") {
-      alert("Unauthorize!");
-      navigate("/register", { replace: true });
-      return;
-    }
-    if (result.message === "redirect-register-otp") {
-      alert("Account is not active!");
-      navigate("/register/otp", { replace: true });
-      return;
-    }
-    
-    setErrorMsg(result.message);
-    return;
-  }
-
-  // login sukses
-  navigate("/admin/internal");
-};
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4">
@@ -230,9 +214,9 @@ const handleLoginAfterRegister = async (form) => {
         </form>
 
         <p className="text-center mt-4 text-sm">
-          Already have an account?{" "}
+          Sudah punya akun?{" "}
           <Link to={`${basePath}/login`} className="text-blue-600 hover:underline">
-            Login
+            Masuk
           </Link>
         </p>
       </div>

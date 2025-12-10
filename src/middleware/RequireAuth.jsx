@@ -1,21 +1,43 @@
-import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
-import { getToken } from "../utils/cookies";
+import { Navigate, useLocation } from "react-router-dom";
 import useSidebarAuth from "../hooks/useSidebarAuth";
 
-export default function RequireAuth() {
-  const token = getToken();
+export default function RequireAuth({ children }) {
+  const { sidebar, loading, errorCode, errorMessage } = useSidebarAuth();
+  const location = useLocation();
 
-  if (!token) return <Navigate to="/" replace />;
+  const appName = location.pathname.split("/")[1] || "";
 
-  const { loading } = useSidebarAuth(token);
+  if (loading) return <p>Loading...</p>;
 
-  if (loading)
+  if (!sidebar) {
+    // 402 → belum aktif → register OTP
+      if (errorCode === 402 || errorMessage === "Account is not active") {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
-      </div>
+      <Navigate
+        to={`/${appName}/register-otp`}
+        replace
+        state={{
+          msg: "Email has been sent to your email.",
+          appName,
+          reason: errorMessage,
+        }}
+      />
     );
+  }
 
-  return <Outlet />;
+    // 403 → login OTP
+    if (errorCode === 403) {
+      return <Navigate to={`/${appName}/login-otp`} replace />;
+    }
+
+    // 401 → login biasa
+    if (errorCode === 401) {
+      return <Navigate to={`/${appName}/login`} replace />;
+    }
+
+    // fallback
+    return <Navigate to={`/${appName}/login`} replace />;
+  }
+
+  return children;
 }

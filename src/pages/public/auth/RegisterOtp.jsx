@@ -5,12 +5,15 @@ import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
 import { getToken } from "../../../utils/cookies";
 import { navigateByRole } from "../../../utils/navigateByRole";
+import { login } from "../../../api/auth";
 
 function RegisterOtp() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
   const { state } = useLocation();
   const message = state?.msg;
+  const appName = state?.appName;
+  const basePath = `/${appName}`;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const { timer, resetTimer, formatTime } = useOtpTimer(120);
@@ -41,6 +44,8 @@ const handleSubmit = async (e) => {
 
   if (code.length !== 6) return setErrorMsg("OTP must be 6 digits.");
 
+  // === VERIFY OTP ===
+  let verifyRes;
   try {
     const token = getToken();
     const { data } = await API.post(
@@ -49,19 +54,55 @@ const handleSubmit = async (e) => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    if (data.status === "Success") {
-        alert("Register OTP Valid!");
-
-      const { data: sidebarData } = await API.get("/user/sidebar", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      navigateByRole(sidebarData.data?.roles, navigate);
-    } else {
+    if (data.status !== "Success") {
       setErrorMsg(data.message);
+      return;
     }
-  } catch {
-    setErrorMsg("Verification failed");
+
+    alert("Register OTP Valid!");
+    verifyRes = true;
+
+  } catch (err) {
+    setErrorMsg("Wrong OTP");
+    return;
+  }
+
+  if (!verifyRes) return;
+
+  // === LOGIN OTOMATIS ===
+  try {
+    const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
+
+    if (!temp) {
+      alert("Session expired. Please login manually.");
+      navigate(`/${appName}/login`);
+      return;
+    }
+
+    const loginRes = await login({
+      email: temp.email,
+      password: temp.password,
+      application: temp.application,
+    });
+
+    if (!loginRes.success) {
+      alert("Login failed after OTP. Please login manually.");
+      navigate(`/${appName}/login`);
+      return;
+    }
+
+    // HAPUS TEMP REGISTER
+    sessionStorage.removeItem("tempRegister");
+
+    // GET ROLE
+    const role = JSON.parse(localStorage.getItem("role"));
+
+    // PENTING: hapus temp sebelum redirect
+    navigateByRole(role, navigate, appName);
+
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong after OTP.");
   }
 };
 

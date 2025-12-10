@@ -1,14 +1,10 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
-export function navigateByRole(role, navigate) {
-  if (!role || role.length === 0) {
-    navigate("/", { replace: true });
+export function navigateByRole(role, navigate, appName) {
+  if (!role) {
+    navigate(`/${appName}/login`, { replace: true });
     return;
   }
 
-  if (role !== null) {
-    navigate("/external-portal", { replace: true });
-  } else {
-    navigate("/", { replace: true });
-  }
+  navigate(`/${appName}/dashboard`, { replace: true });
 }

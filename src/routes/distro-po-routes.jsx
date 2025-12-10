@@ -20,16 +20,16 @@ export const DistroPoRoutes = [{
     children: [
       { index: true, element: <DistroPoLandingPage /> },
       { path: "login", element: <GuestOnly><Login /></GuestOnly> },
-      { path: "login/otp", element: <GuestOnly><LoginOtp /></GuestOnly> },
+      { path: "login-otp", element: <GuestOnly><LoginOtp /></GuestOnly> },
 
       { path: "register", element: <GuestOnly><Register /></GuestOnly> },
-      { path: "register/otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },
+      { path: "register-otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },
       {
           path: "landing2",
           element: <DistroPoLandingPage2 />,
        },
         {
-          path: "/distro-po/dashboard",
+          path: "dashboard",
           element: <RequireAuth><DashboardLayout /></RequireAuth>,
           children: [
             { index: true, element: <DistroPoLandingPage /> },

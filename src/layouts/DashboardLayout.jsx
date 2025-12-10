@@ -1,140 +1,89 @@
-import imgCover from "../assets/images/cover-register.png";
-import HeaderExternal from "../components/HeaderExternal";
-import { useActiveBreakpoint } from "../hooks/useBreakpoints";
-import useSidebarAuth from "../hooks/useSidebarAuth";
-import { useEffect, useState } from "react";
-import { getSidebar } from "../api/portal-external";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { removeToken } from "../utils/cookies";
 
-function SearchBar() {
-  return (
-    <div className="bg-neutral-100 w-full max-w-[280px] md:max-w-[612px] lg:max-w-[700px] p-3 flex items-center gap-2 rounded">
-      <svg className="w-6 h-6" viewBox="0 0 18 18" fill="#313030">
-        <path d="" />
-      </svg>
-
-      <input
-        type="text"
-        placeholder="Search Here"
-        className="text-[#313030] placeholder-[#cfcfcf] text-base font-almarai font-bold bg-transparent outline-none w-full"
-      />
-    </div>
-  );
-}
-
-
-
-function WelcomeLayout({ children }) {
-  return (
-    <div className="relative w-full h-full">
-      <img
-        src={imgCover}
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0"
-      />
-
-      <div className="flex font-almarai items-center justify-center w-full h-full relative z-10">
-        <div className="flex flex-col items-center gap-6 p-24 md:px-32 lg:px-32">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const apps = [
-  { name: "E-Bidding", color: "#d9d9d9" },
-  { name: "PO", color: "#5e5757" },
-  { name: "ETC", color: "#689675" },
-  { name: "ETC", color: "#918c6f" },
-];
-
-function AppsSection({ sidebar }) {
-  console.log("Sidebar received in AppsSection:", sidebar);
+export default function DashboardLayout() {
   const navigate = useNavigate();
-  if (!Array.isArray(sidebar) || sidebar.length === 0) {
-    return (
-      <div className="w-full mx-24 px-4 md:px-24 py-6">
-        <p className="text-gray-500 text-center">No menu available.</p>
-      </div>
-    );
-  }
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const segment = location.pathname.split("/")[1]; 
+  const appName = segment || "public";
+  const basePath = `/${appName}`;
+  
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, log out",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      removeToken();
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("userInfo");
+      localStorage.removeItem("tempRegister");
+      navigate(`${basePath}/login`, { replace: true });
+    }
+  };
 
   return (
-    <div className="w-full mx-24 px-4 md:px-24 py-6">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="bg-[#f9b000] h-[22px] w-px shrink-0" />
-        <p className="text-[#535353] font-bold text-lg md:text-2xl">Apps</p>
-      </div>
+    <div className="min-h-screen w-full bg-gray-100 flex">
 
-      <div className="flex flex-wrap gap-8">
-        {sidebar.map((menu, i) => (
+      {/* SIDEBAR */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-md p-4
+          transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 md:static
+        `}
+      >
+        <h2 className="text-xl font-semibold mb-6">External Admin</h2>
+
+        <nav className="space-y-3">
+          <Link to="/admin/external" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+            Dashboard
+          </Link>
+          <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+            Users
+          </Link>
+          <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+            Settings
+          </Link>
+        </nav>
+      </aside>
+
+      {/* MAIN */}
+      <main className="flex-1 flex flex-col min-h-screen p-6">
+        <header className="flex justify-between items-center mb-6">
+
+          {/* Mobile menu */}
           <button
-            key={i}
-            onClick={() => navigate(menu.redirect)}
-            className="flex flex-col items-center gap-2 focus:outline-none"
+            className="md:hidden px-3 py-2 bg-gray-200 rounded-lg"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <div
-              className="rounded flex items-center justify-center cursor-pointer hover:opacity-80 transition"
-              style={{
-                width: "100px",
-                height: "100px",
-                backgroundColor: "#d9d9d9",
-              }}
-            />
-
-            <p className="font-bold text-black text-xs md:text-base">
-              {menu.menuName}
-            </p>
+            {sidebarOpen ? "Close" : "Menu"}
           </button>
-        ))}
-      </div>
+
+          <h1 className="text-2xl font-semibold">External Dashboard</h1>
+
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-black text-white rounded-xl hover:opacity-80"
+          >
+            Logout
+          </button>
+        </header>
+
+        {/* Page */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 }
-
-
-
-function DashboardLayout() {
-  const { width } = useActiveBreakpoint();
-   const [sidebarData, setSidebarData] = useState([]);
-
-  useEffect(() => {
-    getSidebar().then((res) => {
-      if (res.success) {
-        console.log("Sidebar:", res.data);
-        setSidebarData(res.data); // <-- SAVE DATA
-      } else {
-        console.warn(res.message);
-      }
-    });
-  }, []);
-
-  const titleSize =
-    width < 800 ? "text-[20px]" : width < 1280 ? "text-[30px]" : "text-[45px]";
-
-  return (
-    <>
-      <HeaderExternal />
-
-      <WelcomeLayout>
-        <p
-          className={`font-bold font-almarai text-black text-center ${titleSize}`}
-        >
-          Welcome to{" "}
-          <span className="text-[#f9b000]">Niterra External Portal</span>
-        </p>
-
-        <div className="w-full max-w-[280px] md:max-w-[612px] lg:max-w-[700px]">
-          <SearchBar />
-        </div>
-      </WelcomeLayout>
-      <AppsSection sidebar={sidebarData} />
-      <footer className="text-center text-sm text-gray-500 p-4">
-        © 2025 E-Bidding
-      </footer>
-    </>
-  );
-}
-
-export default DashboardLayout;
