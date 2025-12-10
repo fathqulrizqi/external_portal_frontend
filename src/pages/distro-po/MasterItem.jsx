@@ -1,3 +1,12 @@
+// Custom renderer for price column to add comma delimiter
+function priceCommaRenderer(instance, td, row, col, prop, value, cellProperties) {
+  Handsontable.renderers.TextRenderer.apply(this, arguments);
+  if (typeof value === 'number' && !isNaN(value)) {
+    td.textContent = value.toLocaleString('en-US');
+  } else if (typeof value === 'string' && value !== '' && !isNaN(Number(value))) {
+    td.textContent = Number(value).toLocaleString('en-US');
+  }
+}
 import React, { useEffect, useState, useRef } from 'react';
 import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../api/distro-po/masteritem';
 import { HotTable } from '@handsontable/react';
@@ -13,7 +22,7 @@ const columns = [
   { data: 'spType', type: 'text', title: 'SP Type' },
   { data: 'itemId', type: 'text', title: 'Item ID' },
   { data: 'isActive', type: 'checkbox', title: 'Active' },
-  { data: 'price', type: 'numeric', title: 'Price' },
+  { data: 'price', type: 'numeric', title: 'Price', renderer: priceCommaRenderer, className: 'htRight' },
 ];
 
 export default function MasterItemPage() {
@@ -21,6 +30,8 @@ export default function MasterItemPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [unsaved, setUnsaved] = useState(false);
+  const [saving, setSaving] = useState(false); // <-- Add saving state
   const hotTableComponent = useRef(null);
 
   useEffect(() => {
@@ -44,20 +55,8 @@ export default function MasterItemPage() {
 
   const handleAfterChange = async (changes, source) => {
     if (source === 'edit' && changes) {
-      for (const change of changes) {
-        const [rowIdx, prop, oldValue, newValue] = change;
-        const row = data[rowIdx];
-        if (row && row[prop] !== newValue) {
-          try {
-            await updateMasterItem(row.id, { ...row, [prop]: newValue });
-            setSnackbar({ open: true, message: 'Row updated', severity: 'success' });
-            const items = await getMasterItems();
-            setData(items);
-          } catch {
-            setSnackbar({ open: true, message: 'Failed to update row', severity: 'error' });
-          }
-        }
-      }
+      setUnsaved(true);
+      // Do not auto-save, just mark as unsaved
     }
   };
 
@@ -100,27 +99,12 @@ export default function MasterItemPage() {
       setSnackbar({ open: true, message: 'Failed to delete row', severity: 'error' });
     }
   };
-
-  // Add a custom renderer for the delete button
-  const hotColumns = [
-    ...columns,
-    {
-      data: 'delete',
-      title: 'Delete',
-      renderer: (instance, td, row, col, prop, value, cellProperties) => {
-        td.innerHTML = '<button style="color: white; background: #d32f2f; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer;">Delete</button>';
-        td.onclick = () => handleDeleteRow(row);
-        return td;
-      },
-      readOnly: true,
-      width: 90,
-    },
-  ];
+  const hotColumns = [...columns]; // Use only the main columns, no custom delete column
   // Save all rows to API
-        const handleSaveAll = async () => {
+  const handleSaveAll = async () => {
+    setSaving(true);
     let success = true;
-    // Upsert each row: update if id exists, create if not and itemId is unique in the current data
-    const existingItemIds = new Set(data.filter(r => r.id).map(r => r.itemId));
+    // Upsert each row: update if id exists, create if not
     for (const row of data) {
       if (row && typeof row === 'object') {
         const {
@@ -145,7 +129,7 @@ export default function MasterItemPage() {
               isActive,
               price
             });
-          } else if (!existingItemIds.has(itemId)) {
+          } else {
             await createMasterItem({
               vehicle,
               vehicleId,
@@ -156,7 +140,6 @@ export default function MasterItemPage() {
               isActive,
               price
             });
-            existingItemIds.add(itemId);
           }
         } catch {
           success = false;
@@ -171,15 +154,30 @@ export default function MasterItemPage() {
       } else {
         setData([]);
       }
+      setUnsaved(false);
     } else {
       setSnackbar({ open: true, message: 'Some changes failed to save', severity: 'error' });
     }
-        };
+    setSaving(false);
+  };
 
   return (
     <Box maxWidth="lg" mx="auto" p={4} bgcolor="#fff" borderRadius={2} boxShadow={2}>
       <Typography variant="h4" mb={3} color="primary">Master Item</Typography>
-      <Button variant="contained" color="primary" onClick={handleSaveAll} sx={{ mb: 2 }}>Save</Button>
+      {unsaved && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          You have unsaved changes.
+        </Alert>
+      )}
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleSaveAll}
+        sx={{ mb: 2 }}
+        disabled={saving}
+      >
+        {saving ? 'Saving...Please wait' : 'Save'}
+      </Button>
       <div style={{ width: '100%', minHeight: 500 }}>
         <HotTable
           ref={hotTableComponent}

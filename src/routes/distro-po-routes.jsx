@@ -19,6 +19,10 @@ const DistroPoRoutes = [{
         element: <DistributorPOForm />,
       },
       {
+        path: "form/:id",
+        element: <DistributorPOForm />,
+      },
+      {
         path: "list",
         element: <POList />,
       }

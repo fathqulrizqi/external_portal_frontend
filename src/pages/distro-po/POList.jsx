@@ -1,24 +1,21 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAllDistributorPOs } from '../../api/distro-po/distro-po';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  flexRender
-} from '@tanstack/react-table';
+import { DataGrid } from '@mui/x-data-grid';
+import Button from '@mui/material/Button';
 
 const POList = () => {
+  const navigate = useNavigate();
   const [poList, setPOList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [columnFilters, setColumnFilters] = useState([]);
 
   useEffect(() => {
     async function fetchPOs() {
       setLoading(true);
       const result = await getAllDistributorPOs();
       if (result.success) {
-        setPOList(result.data);
+        setPOList(result.data.map((row, idx) => ({ ...row, id: row.uuid || idx })));
         setError('');
       } else {
         setError(result.message);
@@ -28,105 +25,105 @@ const POList = () => {
     fetchPOs();
   }, []);
 
-  const columns = useMemo(
-    () => [
-      {
-        accessorKey: 'id',
-        header: 'ID',
-        filterFn: 'includesString',
-      },
-      {
-        accessorKey: 'poNumber',
-        header: 'PO Number',
-        filterFn: 'includesString',
-      },
-      {
-        accessorKey: 'distributorName',
-        header: 'Distributor',
-        filterFn: 'includesString',
-      },
-      {
-        accessorKey: 'customerCode',
-        header: 'Customer Code',
-        filterFn: 'includesString',
-      },
-      {
-        accessorKey: 'poDate',
-        header: 'Date',
-        cell: info => info.getValue()?.slice(0, 10),
-        filterFn: 'includesString',
-      },
-      {
-        accessorKey: 'createdBy',
-        header: 'Created By',
-        filterFn: 'includesString',
-      },
-      {
-        accessorKey: 'approvedBy',
-        header: 'Approved By',
-        filterFn: 'includesString',
-      },
-    ],
-    []
-  );
-
-  const table = useReactTable({
-    data: poList,
-    columns,
-    state: {
-      columnFilters,
+  const columns = [
+    {
+      field: 'number',
+      headerName: 'Number',
+      width: 80,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (params.rowIndex !== undefined ? params.rowIndex + 1 : ''),
     },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
+    {
+      field: 'poNumber',
+      headerName: 'PO Number',
+      width: 180,
+      renderCell: (params) => (
+        <Button
+          variant="text"
+          color="primary"
+          onClick={() => navigate(`/distro-po/form/${params.row.uuid}`)}
+        >
+          {params.value}
+        </Button>
+      ),
+      flex: 1,
+    },
+    {
+      field: 'distributorName',
+      headerName: 'Distributor',
+      width: 180,
+      flex: 1,
+    },
+    {
+      field: 'customerCode',
+      headerName: 'Customer Code',
+      width: 140,
+      flex: 1,
+    },
+    {
+      field: 'poDate',
+      headerName: 'Date',
+      width: 120,
+      valueFormatter: (params) => params.value ? params.value.slice(0, 10) : '',
+      flex: 1,
+    },
+    {
+      field: 'niterraSO',
+      headerName: 'Niterra SO',
+      width: 140,
+      flex: 1,
+    },
+    {
+      field: 'niterraPO',
+      headerName: 'Niterra PO',
+      width: 140,
+      flex: 1,
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Created At',
+      width: 120,
+      valueFormatter: (params) => params.value ? params.value.slice(0, 10) : '',
+      flex: 1,
+    },
+    {
+      field: 'updatedAt',
+      headerName: 'Updated At',
+      width: 120,
+      valueFormatter: (params) => params.value ? params.value.slice(0, 10) : '',
+      flex: 1,
+    },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-xl font-bold mb-4">Saved Distributor POs</h2>
+    <div className="max-w-6xl mx-auto p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-blue-800">Saved Distributor POs</h2>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate('/distro-po/form')}
+        >
+          + Create New PO
+        </Button>
+      </div>
       {loading ? <p>Loading...</p> : null}
       {error ? <p className="text-red-500">{error}</p> : null}
-      <table className="w-full border">
-        <thead>
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} className="border px-2 py-1">
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                  {header.column.getCanFilter() ? (
-                    <div>
-                      <input
-                        type="text"
-                        value={
-                          (table.getState().columnFilters.find(f => f.id === header.column.id)?.value) || ''
-                        }
-                        onChange={e =>
-                          header.column.setFilterValue(e.target.value)
-                        }
-                        placeholder={`Filter...`}
-                        className="mt-1 p-1 border rounded w-full"
-                      />
-                    </div>
-                  ) : null}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className="border px-2 py-1">
-                  {flexRender(cell.column.columnDef.cell ?? cell.column.columnDef.header, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div style={{ height: 600, width: '100%' }}>
+        <DataGrid
+          rows={poList}
+          columns={columns}
+          pageSize={10}
+          rowsPerPageOptions={[10, 25, 50]}
+          pagination
+          disableSelectionOnClick
+          sortingOrder={["asc", "desc"]}
+          filterMode="client"
+          sx={{ backgroundColor: 'white', borderRadius: 2, boxShadow: 1 }}
+          autoHeight={false}
+        />
+      </div>
     </div>
   );
 };

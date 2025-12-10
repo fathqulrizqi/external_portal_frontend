@@ -1,3 +1,57 @@
+// Update Distributor PO by ID
+export const updateDistributorPO = async (id, headerInfo, items) => {
+  try {
+    let poDate = headerInfo.poDate;
+    if (poDate && !poDate.includes('T')) {
+      poDate = new Date(poDate).toISOString();
+    }
+    const payload = {
+      header: {
+        ...headerInfo,
+        customerCode: headerInfo.custCode,
+        poDate,
+        niterraSO: headerInfo.niterraSO,
+      },
+      items: items.map(({ id, category, type, ...rest }) => ({
+        vehicleCategory: category,
+        spType: type,
+        ...rest
+      })),
+    };
+    delete payload.header.custCode;
+    const response = await API.put(`/distro-po/${id}`, payload);
+    return {
+      success: true,
+      data: response.data,
+      message: response.data.message || "PO updated successfully"
+    };
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.errors || "Failed to update PO";
+    return {
+      success: false,
+      data: null,
+      message: msg
+    };
+  }
+};
+// Fetch single Distributor PO by ID
+export const getDistributorPOById = async (id) => {
+  try {
+      const response = await API.get(`/distro-po/${id}`); // No change needed here
+    return {
+      success: true,
+      data: response.data,
+      message: response.data.message || "Fetched successfully"
+    };
+  } catch (err) {
+    const msg = err.response?.data?.message || err.response?.data?.errors || "Failed to fetch PO";
+    return {
+      success: false,
+      data: null,
+      message: msg
+    };
+  }
+};
 import { API } from "..";
 // Save Distributor PO (header + items)
 export const saveDistributorPO = async (headerInfo, items) => {
@@ -13,6 +67,7 @@ export const saveDistributorPO = async (headerInfo, items) => {
         ...headerInfo,
         customerCode: headerInfo.custCode, // Map custCode to customerCode
         poDate,
+        niterraSO: headerInfo.niterraSO,
       },
       items: items.map(({ id, category, type, ...rest }) => ({
         vehicleCategory: category,
