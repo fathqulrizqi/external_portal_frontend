@@ -19,6 +19,13 @@ function yellowMarkingRenderer(instance, td, row, col, prop, value, cellProperti
     td.style.background = '';
     td.style.border = '';
   }
+  // Align right and add comma delimiter for qty column
+  if (prop === 'qty') {
+    td.style.textAlign = 'right';
+    if (value !== null && value !== undefined && value !== '') {
+      td.textContent = Number(value).toLocaleString();
+    }
+  }
 }
 import 'handsontable/dist/handsontable.full.min.css';
 import { Save, Printer, FileText } from 'lucide-react';
@@ -53,25 +60,25 @@ const DistributorPOForm = () => {
             niterraSO: po.niterraSO || ''
           });
           setNiterraPO(po.niterraPO || '');
-          setItems(
-            Array.isArray(po.items) && po.items.length > 0
-              ? po.items.map((item, idx) => ({
-                  id: idx + 1,
-                  category: item.vehicleCategory,
-                  type: item.spType,
-                  partName: item.partName,
-                  partNumber: item.partNumber,
-                  qty: item.qty
-                }))
-              : [
-                  { id: 1, category: null, type: null, partName: null, partNumber: null, qty: null },
-                  { id: 2, category: null, type: null, partName: null, partNumber: null, qty: null },
-                  { id: 3, category: null, type: null, partName: null, partNumber: null, qty: null },
-                  { id: 4, category: null, type: null, partName: null, partNumber: null, qty: null },
-                  { id: 5, category: null, type: null, partName: null, partNumber: null, qty: null },
-                  { id: 6, category: null, type: null, partName: null, partNumber: null, qty: null },
-                ]
-          );
+          const loadedItems = Array.isArray(po.items) && po.items.length > 0
+            ? po.items.map((item, idx) => ({
+                id: idx + 1,
+                category: item.vehicleCategory,
+                type: item.spType,
+                partName: item.partName,
+                partNumber: item.partNumber,
+                qty: item.qty
+              }))
+            : [
+                { id: 1, category: null, type: null, partName: null, partNumber: null, qty: null },
+                { id: 2, category: null, type: null, partName: null, partNumber: null, qty: null },
+                { id: 3, category: null, type: null, partName: null, partNumber: null, qty: null },
+                { id: 4, category: null, type: null, partName: null, partNumber: null, qty: null },
+                { id: 5, category: null, type: null, partName: null, partNumber: null, qty: null },
+                { id: 6, category: null, type: null, partName: null, partNumber: null, qty: null },
+              ];
+          setItems(loadedItems);
+          setSummary(calculateSummary(loadedItems));
           setPoNotFound(false);
         } else {
           setPoNotFound(true);
@@ -115,6 +122,9 @@ const DistributorPOForm = () => {
     gpTotal: 0
   });
 
+
+  // State for unsaved changes
+  const [unsaved, setUnsaved] = useState(false);
   // State for save status
   const [saveStatus, setSaveStatus] = useState({ loading: false, message: '', error: false });
 
@@ -137,6 +147,7 @@ const DistributorPOForm = () => {
 
   // Handler for all table changes (edit, paste, row add/remove, etc)
   const handleTableChange = (changes, source) => {
+    if (changes) setUnsaved(true);
     if (changes) {
       const newItems = [...items];
       changes.forEach(([rowIdx, prop, oldValue, newValue]) => {
@@ -145,13 +156,13 @@ const DistributorPOForm = () => {
         }
         if (prop === 'partName' && prop in newItems[rowIdx]) {
           newItems[rowIdx][prop] = newValue;
-          // Auto-fill partNumber, S/P Type, and Vehicle Category from masterItems
+          // Auto-fill partNumber, S/P Type, and Vehicle ID from masterItems
           const selected = masterItems.find(item => item.productName === newValue);
           if (selected) {
             newItems[rowIdx].partNumber = selected.itemId || '';
             newItems[rowIdx].type = selected.spType || '';
-            // Set category based on master item category
-            newItems[rowIdx].category = selected.category || '';
+            // Set category to vehicleId from master item
+            newItems[rowIdx].category = selected.vehicleId || '';
           } else {
             newItems[rowIdx].partNumber = '';
             newItems[rowIdx].type = '';
@@ -171,6 +182,7 @@ const DistributorPOForm = () => {
   const handleHeaderChange = (e) => {
     const { name, value } = e.target;
     setHeaderInfo(prev => ({ ...prev, [name]: value }));
+    setUnsaved(true);
   };
 
   // Handler for Item Qty Change
@@ -179,10 +191,18 @@ const DistributorPOForm = () => {
       item.id === id ? { ...item, qty: val } : item
     );
     setItems(newItems);
+    setUnsaved(true);
   };
 
-  // Handler for Save ButtonsalesPONumber 
+  // Validation: check if any partName or qty is null/empty
+  const hasIncompleteRows = items.some(item => !item.partName || item.partName === '' || item.qty === null || item.qty === undefined || item.qty === '' || isNaN(item.qty));
+
+  // Handler for Save Button
   const handleSavePO = async () => {
+    if (hasIncompleteRows) {
+      setSaveStatus({ loading: false, message: 'Please fill all Part Name and Qty fields before saving.', error: true });
+      return;
+    }
     setSaveStatus({ loading: true, message: '', error: false });
     const { salesPONumber, ...headerInfoClean } = headerInfo;
     let result;
@@ -198,6 +218,7 @@ const DistributorPOForm = () => {
         setNiterraPO(result.data.niterraPO);
       }
       setSaveStatus({ loading: false, message: result.message || (niterraPO ? 'PO updated successfully!' : 'PO saved successfully!'), error: false });
+      setUnsaved(false);
     } else {
       setSaveStatus({ loading: false, message: result.message || (niterraPO ? 'Failed to update PO' : 'Failed to save PO'), error: true });
     }
@@ -226,6 +247,7 @@ const DistributorPOForm = () => {
           }
         }
       `}</style>
+      
       {poNotFound ? (
         <div className="max-w-xl mx-auto mt-20 p-8 bg-white shadow-lg text-center border border-red-200">
           <h2 className="text-2xl font-bold text-red-600 mb-4">PO Not Found</h2>
@@ -241,13 +263,18 @@ const DistributorPOForm = () => {
         <div id="print-area" className="max-w-6xl mx-auto p-8 bg-white shadow-lg my-8 print:shadow-none print:p-0">
         {/* Title Section + Niterra PO Number */}
         <div className="flex flex-col gap-2 mb-6 border-b-2 pb-4">
-        <div className="mb-4 flex justify-between items-center">
+        <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-4">
           <button
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded shadow"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded shadow mb-2 md:mb-0"
             onClick={() => navigate('/distro-po/list')}
           >
             &larr; Back to PO List
           </button>
+          {unsaved && (
+            <div className="p-3 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 font-semibold rounded md:ml-4 flex items-center">
+              <span className="mr-2">⚠️</span>There are unsaved changes. Please save your work.
+            </div>
+          )}
         </div>
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -323,9 +350,13 @@ const DistributorPOForm = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase">Nomor PO Distro</label>
-                <span className="w-full block border p-2 rounded bg-yellow-50 border-yellow-300 font-mono text-gray-700">
-                  {headerInfo.poNumber}
-                </span>
+                <input
+                  type="text"
+                  name="poNumber"
+                  value={headerInfo.poNumber}
+                  onChange={handleHeaderChange}
+                  className="w-full border p-2 rounded bg-yellow-50 border-yellow-300 font-mono text-gray-700"
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase">Niterra SO Number</label>
@@ -352,27 +383,27 @@ const DistributorPOForm = () => {
               <tbody>
                 <tr className="border-b border-gray-200">
                   <td className="py-1">2W Ni</td>
-                  <td className="text-right font-mono">{summary.twoWNi}</td>
+                  <td className="text-right font-mono">{Number(summary.twoWNi).toLocaleString()}</td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-1">2W PM</td>
-                  <td className="text-right font-mono">{summary.twoWPM}</td>
+                  <td className="text-right font-mono">{Number(summary.twoWPM).toLocaleString()}</td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-1">4W Ni</td>
-                  <td className="text-right font-mono">{summary.fourWNi}</td>
+                  <td className="text-right font-mono">{Number(summary.fourWNi).toLocaleString()}</td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-1">4W PM</td>
-                  <td className="text-right font-mono">{summary.fourWPM}</td>
+                  <td className="text-right font-mono">{Number(summary.fourWPM).toLocaleString()}</td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-1">Plug Cap</td>
-                  <td className="text-right font-mono">{summary.plugCap}</td>
+                  <td className="text-right font-mono">{Number(summary.plugCap).toLocaleString()}</td>
                 </tr>
                 <tr className="font-bold bg-gray-200">
                   <td className="py-2 pl-2">TOTAL</td>
-                  <td className="text-right pr-2">{summary.total}</td>
+                  <td className="text-right pr-2">{Number(summary.total).toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
@@ -382,7 +413,7 @@ const DistributorPOForm = () => {
               <tbody>
                 <tr>
                   <td className="py-1">GP Type</td>
-                  <td className="text-right font-mono">{summary.gpTotal}</td>
+                  <td className="text-right font-mono">{Number(summary.gpTotal).toLocaleString()}</td>
                 </tr>
                 {/* Add other special parts here if needed from CSV */}
               </tbody>
@@ -412,7 +443,9 @@ const DistributorPOForm = () => {
                 type: 'numeric',
                 readOnly: false,
                 editor: 'numeric',
-                renderer: yellowMarkingRenderer
+                renderer: yellowMarkingRenderer,
+                className: 'htRight',
+                format: '0,0',
               },
             ]}
             rowHeaders={true}
@@ -422,6 +455,10 @@ const DistributorPOForm = () => {
             height={300}
             minRows={1}
             minSpareRows={0}
+            filters={true}
+            dropdownMenu={true}
+            columnSorting={true}
+            contextMenu={true}
           />
         </div>
 

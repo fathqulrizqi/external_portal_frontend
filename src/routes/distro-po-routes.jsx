@@ -4,6 +4,7 @@ import DistroPoLandingPage2 from "../pages/distro-po/landing2";
 import DistributorPOForm from "../pages/distro-po/form";
 import POList from "../pages/distro-po/POList";
 import MasterItemPage from "../pages/distro-po/MasterItem";
+import POSummary from "../pages/distro-po/POSummary";
 
 const DistroPoRoutes = [{
     path: "/distro-po",
@@ -25,10 +26,14 @@ const DistroPoRoutes = [{
       {
         path: "list",
         element: <POList />,
-      }
-      ,{
+      },
+      {
         path: "masteritem",
         element: <MasterItemPage />,
+      },
+      {
+        path: "summary",
+        element: <POSummary />,
       }
   ],
 }];
