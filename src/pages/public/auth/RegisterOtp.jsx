@@ -66,6 +66,7 @@ const handleSubmit = async (e) => {
 };
 
 const handleResend = async () => {
+  if (resending) return; // Prevent double trigger
   setResending(true);
   setErrorMsg("");
 

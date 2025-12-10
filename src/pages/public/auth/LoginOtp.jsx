@@ -82,6 +82,7 @@ function LoginOtp() {
 
 
 const handleResend = async () => {
+  if (resending) return; // Prevent double trigger
   setResending(true);
   setErrorMsg("");
 

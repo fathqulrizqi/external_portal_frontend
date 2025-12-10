@@ -12,4 +12,3 @@ export function useActiveBreakpoint() {
 
   return { width };
 }
-

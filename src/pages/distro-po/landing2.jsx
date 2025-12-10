@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../../api/auth";
-import imgBackground from "../../../assets/images/cover-register.png";
-import Swal from "sweetalert2";
-import { setRole } from "../../../utils/cookies";
-import { navigateByRole } from "../../../utils/navigateByRole";
-function LandingDistro() {
+import { login } from "../../api/auth";
+import imgBackground from "../../assets/images/cover-register.png";
+import { navigateByRole } from "../../utils/navigateByRole";
+function DistroPoLandingPage2() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -93,7 +91,7 @@ const handleSubmit = async (e) => {
           </Link>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Login
           </button>
@@ -110,4 +108,4 @@ const handleSubmit = async (e) => {
   );
 }
 
-export default LandingDistro;
+export default DistroPoLandingPage2;

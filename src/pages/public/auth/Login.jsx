@@ -11,6 +11,7 @@ function Login() {
   const [form, setForm] = useState({
     email: "",
     password: "",
+    application:"distro-po",
   });
 
   const [errorMsg, setErrorMsg] = useState("");

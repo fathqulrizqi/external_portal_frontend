@@ -1,5 +1,3 @@
-jsx
-// src/pages/public/distro-po/landing.jsx
 
 import React from 'react';
 // 1. Make sure to import the Link component

@@ -3,9 +3,9 @@ import { API } from ".";
 import { setToken, removeToken, removeRole, getToken } from "../utils/cookies";
 
 // src/services/auth.js
-export const login = async ({ email, password }) => {
+export const login = async ({ email, password, application }) => {
   try {
-    const response = await API.post("/users/login", { email, password });
+    const response = await API.post("/users/login", { email, password, application });
     const { token, role } = response.data.data;
 
     setToken(token);
@@ -88,7 +88,7 @@ export const resetPasswordConfirmation = async (password, passwordConfirm, token
 };
 
 
-export const register = async ({ fullName, email, password, passwordConfirm, phone }) => {
+export const register = async ({ fullName, email, password, passwordConfirm, phone, application }) => {
   try {
     await API.post("/users/register", {
       fullName,
@@ -96,6 +96,7 @@ export const register = async ({ fullName, email, password, passwordConfirm, pho
       password,
       passwordConfirm,
       phone,
+      application
     });
 
     return { success: true, message: "registered" };

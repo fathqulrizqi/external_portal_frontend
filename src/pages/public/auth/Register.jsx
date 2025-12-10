@@ -14,16 +14,17 @@ function Register() {
     phone: "",
     password: "",
     passwordConfirm: "",
+    application:"distro-po",
   });
 
   const [errorMsg, setErrorMsg] = useState("");
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+      setForm({
+        ...form,
+        [e.target.name]: e.target.value,
+      });
   };
 
 const handleSubmit = async (e) => {
@@ -137,6 +138,9 @@ const handleLoginAfterRegister = async (form) => {
               <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
             )}
           </div>
+
+            {/* Role ID (hidden) */}
+            <input type="hidden" name="roleId" value={form.roleId} />
 
           {/* Email */}
           <div>

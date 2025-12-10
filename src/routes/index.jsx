@@ -11,6 +11,13 @@ import ExternalLayout from "../layouts/ExternalLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import ResetPassword from "../pages/public/auth/ResetPassword";
 import ResetPasswordConfirmation from "../pages/public/auth/ResetPasswordConfirmation";
+import DistroPoRoutes from "../routes/distro-po-routes";
+;
+
+// Other routes Start
+//import DistroPoRoutes from "./distro-po";
+
+// Other routes End
 
 const router = createBrowserRouter([
   // PUBLIC
@@ -58,6 +65,7 @@ const router = createBrowserRouter([
       { path: ":menu", element: <DashboardLayout /> },
     ],
   },
+  ...DistroPoRoutes,
 
 ]);
 

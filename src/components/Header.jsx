@@ -36,7 +36,7 @@ function Logo({ width, height }) {
 function Divider() {
   return <div className="bg-[#f9b000] h-[22px] w-px shrink-0" />;
 }
-
+<RegisterButton/>
 function RegisterButton() {
   return (
     <a
@@ -69,9 +69,9 @@ function NavLinks({ showFullMenu }) {
       <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
         E-Bidding
       </p>
-      <p className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
-        Payment Order
-      </p>
+      <Link to="/distro-po" className="font-almarai font-bold text-[14px] tracking-[1.54px] text-black">
+              Distro PO
+      </Link>
       <Divider />
      
       <LoginButton />
