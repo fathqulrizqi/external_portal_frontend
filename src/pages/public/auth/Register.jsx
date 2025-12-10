@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { register } from "../../../api/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
 import { login } from "../../../api/auth";
@@ -8,13 +8,17 @@ import { navigateByRole } from "../../../utils/navigateByRole";
 function Register() {
   const navigate = useNavigate();
 
+  const segment = location.pathname.split("/")[1]; 
+  const appName = segment || "public";
+  const basePath = `/${appName}`;
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     phone: "",
     password: "",
     passwordConfirm: "",
-    application:"distro-po",
+    application: appName,
   });
 
   const [errorMsg, setErrorMsg] = useState("");
@@ -42,7 +46,7 @@ const handleSubmit = async (e) => {
   if (!result.success) {
     if (result.message === "redirect-login") {
       alert("Already registered!");
-      navigate("/login");
+      navigate(`${basePath}/login`, { replace: true });
       return;
     }
 
@@ -59,13 +63,14 @@ const handleSubmit = async (e) => {
   if (!loginRes.success) {
     if (loginRes.message === "redirect-register-otp") {
       alert("Account is not active!");
-      navigate("/register/otp");
+      navigate(`${basePath}/register/otp`, { replace: true });
       return;
     }
 
     if (loginRes.message === "redirect-login") {
       alert("Invalid credentials!");
-      navigate("/login");
+      navigate(`${basePath}/login`, { replace: true });
+
       return;
     }
 
@@ -225,9 +230,9 @@ const handleLoginAfterRegister = async (form) => {
         </form>
 
         <p className="text-center mt-4 text-sm">
-          Sudah punya akun?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Masuk
+          Already have an account?{" "}
+          <Link to={`${basePath}/login`} className="text-blue-600 hover:underline">
+            Login
           </Link>
         </p>
       </div>

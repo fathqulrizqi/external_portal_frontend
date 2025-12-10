@@ -1,28 +1,21 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Header from "../components/Header";
-import CoverHero from "../components/Content/Cover";
 
-export default function PublicLayout() {
+export default function DistroPOLayout() {
   const location = useLocation();
-
-  // true jika route adalah "/"
-  const isLandingPage = location.pathname === "/";
 
   return (
     <div className="w-full flex flex-col bg-gray-50">
-      {/* NAVBAR */}
       <header className="w-full shadow bg-black">
         <Header
-          menus={[
-            { label: "E-Bidding", to: "#" },
-            { label: "Distro PO", to: "/distro-po" },
-          ]}
-          showAuth={false}
+        menus={[
+            { label: "About Distro PO", to: "/distro-po/about" },
+        ]}
+        showAuth={true}
+        authBasePath="/distro-po"
         />
 
       </header>
-
-      {isLandingPage && <CoverHero />}
 
       <main className="flex-1">
         <Outlet />
