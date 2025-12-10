@@ -10,7 +10,7 @@ export default function DashboardLayout() {
   const segment = location.pathname.split("/")[1]; 
   const appName = segment || "public";
   const basePath = `/${appName}`;
-  
+
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -42,11 +42,17 @@ export default function DashboardLayout() {
           md:translate-x-0 md:static
         `}
       >
-        <h2 className="text-xl font-semibold mb-6">External Admin</h2>
+        <h2 className="text-xl font-semibold mb-6">Distro PO</h2>
 
         <nav className="space-y-3">
-          <Link to="/admin/external" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+          <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
             Dashboard
+          </Link>
+          <Link to="/distro-po/dashboard/masteritem" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+            Master Item
+          </Link>
+          <Link to="/distro-po/dashboard/list" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
+            Distro PO List
           </Link>
           <Link to="#" className="block px-3 py-2 rounded-lg hover:bg-gray-200">
             Users
@@ -69,7 +75,7 @@ export default function DashboardLayout() {
             {sidebarOpen ? "Close" : "Menu"}
           </button>
 
-          <h1 className="text-2xl font-semibold">External Dashboard</h1>
+          <h1 className="text-2xl font-semibold">PAGE</h1>
 
           <button
             onClick={handleLogout}
