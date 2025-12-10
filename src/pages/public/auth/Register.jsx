@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { register } from "../../../api/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
 import { login } from "../../../api/auth";
@@ -8,13 +8,17 @@ import { navigateByRole } from "../../../utils/navigateByRole";
 function Register() {
   const navigate = useNavigate();
 
+  const segment = location.pathname.split("/")[1]; 
+  const appName = segment || "public";
+  const basePath = `/${appName}`;
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     phone: "",
     password: "",
     passwordConfirm: "",
-    application:"distro-po",
+    application: appName,
   });
 
   const [errorMsg, setErrorMsg] = useState("");
@@ -42,7 +46,7 @@ const handleSubmit = async (e) => {
   if (!result.success) {
     if (result.message === "redirect-login") {
       alert("Already registered!");
-      navigate("/login");
+      navigate(`${basePath}/login`, { replace: true });
       return;
     }
 
@@ -50,22 +54,30 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  // === REGISTER SUCCESS → AUTO-LOGIN ===
+  // === SAVE TEMP REGISTER DATA FOR OTP PAGE ===
+  sessionStorage.setItem("tempRegister", JSON.stringify({
+    email: form.email,
+    password: form.password,
+    application: form.application,
+  }));
+
+  // === TRY AUTO LOGIN (backend will force OTP if not active) ===
   const loginRes = await login({
     email: form.email,
     password: form.password,
+    application: form.application,
   });
 
   if (!loginRes.success) {
     if (loginRes.message === "redirect-register-otp") {
       alert("Account is not active!");
-      navigate("/register/otp");
+      navigate(`${basePath}/register-otp`, { replace: true });
       return;
     }
 
     if (loginRes.message === "redirect-login") {
       alert("Invalid credentials!");
-      navigate("/login");
+      navigate(`${basePath}/login`, { replace: true });
       return;
     }
 
@@ -75,33 +87,10 @@ const handleSubmit = async (e) => {
 
   // === LOGIN SUCCESS ===
   const role = JSON.parse(localStorage.getItem("role"));
-  navigateByRole(role, navigate);
+
+  navigateByRole(role, navigate, appName);
 };
 
-
-// bisa buat helper
-const handleLoginAfterRegister = async (form) => {
-  const result = await login(form); 
-
-  if (!result.success) {
-    if (result.message === "redirect-register") {
-      alert("Unauthorize!");
-      navigate("/register", { replace: true });
-      return;
-    }
-    if (result.message === "redirect-register-otp") {
-      alert("Account is not active!");
-      navigate("/register/otp", { replace: true });
-      return;
-    }
-    
-    setErrorMsg(result.message);
-    return;
-  }
-
-  // login sukses
-  navigate("/admin/internal");
-};
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4">
@@ -226,7 +215,7 @@ const handleLoginAfterRegister = async (form) => {
 
         <p className="text-center mt-4 text-sm">
           Sudah punya akun?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to={`${basePath}/login`} className="text-blue-600 hover:underline">
             Masuk
           </Link>
         </p>

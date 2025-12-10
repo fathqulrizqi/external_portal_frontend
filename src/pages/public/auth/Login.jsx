@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { login } from "../../../api/auth";
 import imgBackground from "../../../assets/images/cover-register.png";
 import Swal from "sweetalert2";
@@ -7,11 +7,16 @@ import { setRole } from "../../../utils/cookies";
 import { navigateByRole } from "../../../utils/navigateByRole";
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const segment = location.pathname.split("/")[1]; 
+  const appName = segment || "public";
+  const basePath = `/${appName}`;
 
   const [form, setForm] = useState({
     email: "",
     password: "",
-    application:"distro-po",
+    application: appName,
   });
 
   const [errorMsg, setErrorMsg] = useState("");
@@ -31,7 +36,7 @@ const handleSubmit = async (e) => {
   if (!result.success) {
     if (result.message === "redirect-login") {
       alert("Invalid Email or Password!")
-      navigate("/login", { replace: true });
+      navigate(`${basePath}/login`, { replace: true });
       return;
     } 
     if (result.message === "redirect-register") {
@@ -43,7 +48,7 @@ const handleSubmit = async (e) => {
   }
 
   const role = JSON.parse(localStorage.getItem("role")); 
-  navigateByRole(role, navigate);
+  navigateByRole(role, navigate, appName);
 };
 
   return (
@@ -102,7 +107,7 @@ const handleSubmit = async (e) => {
 
         <p className="text-center mt-4 text-sm">
           Don't have any account?{" "}
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to={`${basePath}/register`} className="text-blue-600 hover:underline">
             Register
           </Link>
         </p>
