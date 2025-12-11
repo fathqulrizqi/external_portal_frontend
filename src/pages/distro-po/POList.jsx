@@ -49,16 +49,24 @@ const POList = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-1">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-blue-800">Saved Distributor POs</h2>
+     <div className="w-full">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Saved Distributor POs</h2>
+          <p className="text-gray-600 text-sm mt-1">Manage and view all purchase orders</p>
+        </div>
         <button
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
           onClick={() => navigate('/distro-po/dashboard/form')}
         >
-          + Create New PO
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Create New PO
         </button>
       </div>
+
       {loading ? <p>Loading...</p> : null}
       {error ? <p className="text-red-500">{error}</p> : null}
       <div className="overflow-x-auto bg-white rounded-lg shadow" style={{ fontSize: '0.85rem' }}>
