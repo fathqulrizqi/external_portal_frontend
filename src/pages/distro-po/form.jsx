@@ -5,6 +5,7 @@ function greyedReadOnlyRenderer(instance, td, row, col, prop, value, cellPropert
   td.style.color = '#505660ff'; // Tailwind gray-700 (dark for readability)
 }
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { getDistributorPOById } from '../../api/distro-po/distro-po';
 import { HotTable } from '@handsontable/react';
@@ -42,7 +43,9 @@ const DistributorPOForm = () => {
   // Load master items for dropdown (must be top-level, not nested)
   useEffect(() => {
     getMasterItems().then(items => {
-      setMasterItems(Array.isArray(items) ? items : []);
+      // Only include active items
+      const activeItems = Array.isArray(items) ? items.filter(item => item.isActive === true || item.isActive === 'Y') : [];
+      setMasterItems(activeItems);
     });
   }, []);
 
@@ -95,7 +98,8 @@ const DistributorPOForm = () => {
     custCode: 'C99999',
     poDate: '2023-12-25',
     poNumber: '9999.PO.25.999999',
-    niterraSO: ''
+    niterraSO: '',
+    ngkaxSO: ''
   });
 
   // State for Niterra PO number returned from backend
@@ -179,10 +183,31 @@ const DistributorPOForm = () => {
   };
 
   // Handler for Header Inputs
-  const handleHeaderChange = (e) => {
+  const handleHeaderChange = async (e) => {
     const { name, value } = e.target;
     setHeaderInfo(prev => ({ ...prev, [name]: value }));
     setUnsaved(true);
+
+    // If poNumber changes, fetch SO number(s) from API
+    if (name === 'poNumber' && value) {
+      try {
+        const res = await axios.get(`/api/sales/d365-import-form-sales?poNumber=${encodeURIComponent(value)}`);
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+          // Collect SO numbers, join with comma
+          const soNumbers = res.data.data.map(item => item.soNumber).filter(Boolean);
+          const ngkaxSOValue = soNumbers.length > 0 ? soNumbers.join(', ') : '';
+          setHeaderInfo(prev => ({
+            ...prev,
+            ngkaxSO: ngkaxSOValue
+          }));
+          console.log('Fetched NGKAX SO Numbers:', ngkaxSOValue);
+        }
+      } catch (err) {
+        // Optionally handle error
+        setHeaderInfo(prev => ({ ...prev, ngkaxSO: '' }));
+        console.log('Fetched NGKAX SO Numbers:', '');
+      }
+    }
   };
 
   // Handler for Item Qty Change
@@ -365,6 +390,17 @@ const DistributorPOForm = () => {
                   name="niterraSO"
                   placeholder="Niterra SO Number"
                   value={headerInfo.niterraSO}
+                  onChange={handleHeaderChange}
+                  className="w-full border p-2 rounded bg-yellow-50 border-yellow-300"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase">NGKAX SO Number</label>
+                <input 
+                  type="text" 
+                  name="ngkaxSO"
+                  placeholder="NGKAX SO Number"
+                  value={typeof headerInfo.ngkaxSO === 'string' ? headerInfo.ngkaxSO : ''}
                   onChange={handleHeaderChange}
                   className="w-full border p-2 rounded bg-yellow-50 border-yellow-300"
                 />
