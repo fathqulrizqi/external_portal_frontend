@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getPOSummary } from '../../api/distro-po/summary';
-import { DataGrid } from '@mui/x-data-grid';
+import DataTable from 'datatables.net-react';
+import DataTableLib from 'datatables.net';
+import 'datatables.net-dt/css/dataTables.dataTables.css';
 
 const POSummary = () => {
   const [year, setYear] = useState(new Date().getFullYear());
@@ -20,35 +22,58 @@ const POSummary = () => {
   useEffect(() => {
     // Aggregate by distributor, month, year
     const vehicleIDs = ["2W Ni", "2W PM", "4W Ni", "4W PM"];
+    const vehicleIDsNorm = vehicleIDs.map(v => v.trim().toLowerCase());
     const summaryMap = {};
     rawRows.forEach(row => {
-      const key = `${row.distributorName}-${row.month || ''}-${row.year}`;
+      // Derive month from PODate if missing
+      let month = row.month;
+      let year = row.year;
+      if ((!month || !year) && row.PODate) {
+        const date = new Date(row.PODate);
+        if (!isNaN(date.getTime())) {
+          month = date.getMonth() + 1;
+          year = date.getFullYear();
+        }
+      }
+      // Normalize vehicleID (trim, case)
+      const vehicleIDRaw = (row.vehicleID || '').trim();
+      const vehicleIDNorm = vehicleIDRaw.toLowerCase();
+      const key = `${row.distributorName}-${month || ''}-${year}`;
       if (!summaryMap[key]) {
         summaryMap[key] = {
           id: key,
           distributorName: row.distributorName,
-          month: row.month,
-          year: row.year,
+          month: month,
+          year: year,
         };
         vehicleIDs.forEach(vID => {
           summaryMap[key][vID] = 0;
         });
       }
-      if (vehicleIDs.includes(row.vehicleID)) {
-        summaryMap[key][row.vehicleID] += Number(row.qty) || 0;
+      // Find the matching vehicleID from the reference list
+      const idx = vehicleIDsNorm.indexOf(vehicleIDNorm);
+      if (idx !== -1) {
+        const vID = vehicleIDs[idx];
+        summaryMap[key][vID] += Number(row.qty) || 0;
       }
     });
     setRows(Object.values(summaryMap));
   }, [rawRows]);
 
   const columns = [
-    { field: 'distributorName', headerName: 'Distributor', width: 180 },
-    { field: 'month', headerName: 'Month', width: 100 },
-    { field: 'year', headerName: 'Year', width: 100 },
-    { field: '2W Ni', headerName: '2W Ni', width: 120, type: 'number', valueFormatter: params => (params.value != null ? Number(params.value).toLocaleString() : '') },
-    { field: '2W PM', headerName: '2W PM', width: 120, type: 'number', valueFormatter: params => (params.value != null ? Number(params.value).toLocaleString() : '') },
-    { field: '4W Ni', headerName: '4W Ni', width: 120, type: 'number', valueFormatter: params => (params.value != null ? Number(params.value).toLocaleString() : '') },
-    { field: '4W PM', headerName: '4W PM', width: 120, type: 'number', valueFormatter: params => (params.value != null ? Number(params.value).toLocaleString() : '') },
+    { title: 'Distributor', data: 'distributorName' },
+    { title: 'Month', data: 'month', render: (data) => {
+        const monthNum = typeof data === 'string' ? parseInt(data, 10) : Number(data);
+        if (!data || isNaN(monthNum) || monthNum < 1 || monthNum > 12) return 'All';
+        const date = new Date(2000, monthNum - 1, 1);
+        return date.toLocaleString('en-US', { month: 'short' });
+      }
+    },
+    { title: 'Year', data: 'year' },
+    { title: '2W Ni', data: '2W Ni', render: (data) => data != null ? Number(data).toLocaleString() : '' },
+    { title: '2W PM', data: '2W PM', render: (data) => data != null ? Number(data).toLocaleString() : '' },
+    { title: '4W Ni', data: '4W Ni', render: (data) => data != null ? Number(data).toLocaleString() : '' },
+    { title: '4W PM', data: '4W PM', render: (data) => data != null ? Number(data).toLocaleString() : '' },
   ];
 
   return (
@@ -63,15 +88,22 @@ const POSummary = () => {
           ))}
         </select>
       </div>
-      <div style={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={rows}
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <DataTable
+          data={rawRows}
           columns={columns}
-          loading={loading}
-          getRowId={row => row.id || `${row.distributorName}-${row.vehicleID}-${row.month || ''}-${row.year}`}
-          pageSize={25}
-          rowsPerPageOptions={[25, 50, 100]}
-          sortingOrder={["desc", "asc"]}
+          className="display"
+          dt={DataTableLib}
+          options={{
+            paging: true,
+            pageLength: 25,
+            lengthMenu: [25, 50, 100],
+            searching: true,
+            ordering: true,
+            info: true,
+            responsive: true,
+            autoWidth: false,
+          }}
         />
       </div>
     </div>

@@ -14,7 +14,6 @@ export default function DistroPOLayout() {
         showAuth={true}
         authBasePath="/distro-po"
         />
-
       </header>
 
       <main className="flex-1">
@@ -22,7 +21,7 @@ export default function DistroPOLayout() {
       </main>
 
       <footer className="text-center text-sm text-gray-500 p-4">
-        © 2025 E-Bidding
+        © 2025 Distro PO Portal
       </footer>
     </div>
   );

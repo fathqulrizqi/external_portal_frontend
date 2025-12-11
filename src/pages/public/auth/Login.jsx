@@ -49,6 +49,8 @@ const handleSubmit = async (e) => {
 
   const role = JSON.parse(localStorage.getItem("role")); 
   navigateByRole(role, navigate, appName);
+  // Force reload to ensure token is available for all requests
+  window.location.reload();
 };
 
   return (

@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllDistributorPOs } from '../../api/distro-po/distro-po';
-import { DataGrid } from '@mui/x-data-grid';
-import Button from '@mui/material/Button';
-
+import DataTable from 'datatables.net-react';
+import DataTableLib from 'datatables.net';
+import 'datatables.net-dt/css/dataTables.dataTables.css';
+DataTable.use(DataTableLib);
 const POList = () => {
   const navigate = useNavigate();
   const [poList, setPOList] = useState([]);
@@ -26,102 +28,63 @@ const POList = () => {
   }, []);
 
   const columns = [
-    {
-      field: 'number',
-      headerName: 'Number',
-      width: 80,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (params.rowIndex !== undefined ? params.rowIndex + 1 : ''),
+    { title: 'No', data: null, orderable: false, render: function (data, type, row, meta) {
+      // DataTables will always pass the correct visible row index in meta.row
+      return meta.row + 1;
+    } },
+    { title: 'PO Number', data: 'poNumber', render: (data, type, row) => `<a href="/distro-po/dashboard/form/${row.uuid}" class='text-blue-600 underline'>${data}</a>` },
+    { title: 'Distributor', data: 'distributorName' },
+    { title: 'Customer Code', data: 'customerCode' },
+    { title: 'Date', data: 'poDate', render: (data) => {
+        if (!data) return '';
+        const date = new Date(data);
+        if (isNaN(date.getTime())) return data;
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
+      }
     },
-    {
-      field: 'poNumber',
-      headerName: 'PO Number',
-      width: 180,
-      renderCell: (params) => (
-        <Button
-          variant="text"
-          color="primary"
-          onClick={() => navigate(`/distro-po/form/${params.row.uuid}`)}
-        >
-          {params.value}
-        </Button>
-      ),
-      flex: 1,
-    },
-    {
-      field: 'distributorName',
-      headerName: 'Distributor',
-      width: 180,
-      flex: 1,
-    },
-    {
-      field: 'customerCode',
-      headerName: 'Customer Code',
-      width: 140,
-      flex: 1,
-    },
-    {
-      field: 'poDate',
-      headerName: 'Date',
-      width: 120,
-      valueFormatter: (params) => params.value ? params.value.slice(0, 10) : '',
-      flex: 1,
-    },
-    {
-      field: 'niterraSO',
-      headerName: 'Niterra SO',
-      width: 140,
-      flex: 1,
-    },
-    {
-      field: 'niterraPO',
-      headerName: 'Niterra PO',
-      width: 140,
-      flex: 1,
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Created At',
-      width: 120,
-      valueFormatter: (params) => params.value ? params.value.slice(0, 10) : '',
-      flex: 1,
-    },
-    {
-      field: 'updatedAt',
-      headerName: 'Updated At',
-      width: 120,
-      valueFormatter: (params) => params.value ? params.value.slice(0, 10) : '',
-      flex: 1,
-    },
+    { title: 'Niterra SO', data: 'niterraSO' },
+    { title: 'Niterra PO', data: 'niterraPO' },
+    { title: 'Created At', data: 'createdAt', render: (data) => data ? data.slice(0, 10) : '' },
+    { title: 'Updated At', data: 'updatedAt', render: (data) => data ? data.slice(0, 10) : '' },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
+    <div className="max-w-4xl mx-auto p-1">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-blue-800">Saved Distributor POs</h2>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate('/distro-po/form')}
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          onClick={() => navigate('/distro-po/dashboard/form')}
         >
           + Create New PO
-        </Button>
+        </button>
       </div>
       {loading ? <p>Loading...</p> : null}
       {error ? <p className="text-red-500">{error}</p> : null}
-      <div style={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={poList}
+      <div className="overflow-x-auto bg-white rounded-lg shadow" style={{ fontSize: '0.85rem' }}>
+        <style>{`
+          .display.dataTable tbody tr {
+            height: 32px;
+          }
+          .display.dataTable td, .display.dataTable th {
+            padding: 0.25rem 0.5rem;
+          }
+        `}</style>
+        <DataTable
+          data={poList}
           columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[10, 25, 50]}
-          pagination
-          disableSelectionOnClick
-          sortingOrder={["asc", "desc"]}
-          filterMode="client"
-          sx={{ backgroundColor: 'white', borderRadius: 2, boxShadow: 1 }}
-          autoHeight={false}
+          className="display"
+          dt={DataTableLib}
+          options={{
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [10, 25, 50],
+            searching: true,
+            ordering: true,
+            info: true,
+            responsive: true,
+            autoWidth: false,
+          }}
         />
       </div>
     </div>

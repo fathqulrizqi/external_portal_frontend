@@ -36,6 +36,7 @@ export const DistroPoRoutes = [{
 
             // PAGES
             { path: "form", element: <DistributorPOForm /> },
+            { path: "form/:id", element: <DistributorPOForm /> },
             { path: "list", element: <POList /> },
             { path: "summary", element: <POSummary /> },
             { path: "masteritem", element: <MasterItemPage /> },
@@ -44,4 +45,5 @@ export const DistroPoRoutes = [{
   ],
 }];
 
+          // element: <RequireAuth><DashboardLayout /></RequireAuth>,
 export default DistroPoRoutes;
