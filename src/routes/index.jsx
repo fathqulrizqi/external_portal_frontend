@@ -11,22 +11,22 @@ import ExternalLayout from "../layouts/ExternalLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import ResetPassword from "../pages/public/auth/ResetPassword";
 import ResetPasswordConfirmation from "../pages/public/auth/ResetPasswordConfirmation";
-import DistroPoRoutes from "../routes/distro-po-routes";
-;
+import DistroPoRoutes from "./distro-po/distro-po-routes";
+import DistroPoDashboardRoutes from "./distro-po/distro-po-dashboard-routes";
 
 // Other routes Start
 //import DistroPoRoutes from "./distro-po";
 
 // Other routes End
-
 const router = createBrowserRouter([
-  // PUBLIC
+
+  // PUBLIC (landing general)
   {
     path: "/",
     element: <PublicLayout />,
     children: [
       { index: true, element: <Landing /> },
-      { path: "reset-password", element:<ResetPassword /> },
+      { path: "reset-password", element: <ResetPassword /> },
       { path: "new-password", element: <ResetPasswordConfirmation /> },
 
       { path: "login", element: <GuestOnly><Login /></GuestOnly> },
@@ -36,6 +36,8 @@ const router = createBrowserRouter([
       { path: "register/otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },
     ],
   },
+
+  // EXTERNAL PORTAL
   {
     path: "/external-portal",
     element: (
@@ -49,24 +51,19 @@ const router = createBrowserRouter([
     ],
   },
 
-
+  // INTERNAL DASHBOARD
   {
     path: "/dashboard",
-    element: (
-      <RequireAuth>
-        <DashboardLayout />
-      </RequireAuth>
-    ),
+    element: <DashboardLayout />,
     children: [
-      // dashboard utama
       { index: true, element: <DashboardLayout /> },
-
-      // dynamic child page
       { path: ":menu", element: <DashboardLayout /> },
     ],
   },
-  ...DistroPoRoutes
 
+  // DISTRO PO (berdiri sendiri)
+  ...DistroPoRoutes,
+  ...DistroPoDashboardRoutes,
 ]);
 
 export default router;
