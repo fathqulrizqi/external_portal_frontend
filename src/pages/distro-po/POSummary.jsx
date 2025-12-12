@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { HotTable } from '@handsontable/react';
+import { HotTable } from '@handsontable/react-wrapper';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 

@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchNgkaxSONumbers } from '../../api/NGKAX/NGKAX';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getDistributorPOById } from '../../api/distro-po/distro-po';
-import { HotTable } from '@handsontable/react';
+import { HotTable } from '@handsontable/react-wrapper';
 import Handsontable from 'handsontable';
 import { Save, Printer, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
 import { saveDistributorPO } from '../../api/distro-po/distro-po';

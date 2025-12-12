@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 //import { getAllDistributorPOs } from '../../utils/constants/po-list';
 import { getAllDistributorPOs } from '../../api/distro-po/distro-po';
-import { HotTable } from '@handsontable/react';
+import { HotTable } from '@handsontable/react-wrapper';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 
@@ -171,6 +171,9 @@ const POList = () => {
                             colHeaders={columns.map(col => col.title)}
                             columns={columns}
                             rowHeaders={true}
+                            pagination={{
+        pageSize: '20',
+      }}
                             stretchH="all"
                             licenseKey="non-commercial-and-evaluation"
                             manualColumnResize={true}
