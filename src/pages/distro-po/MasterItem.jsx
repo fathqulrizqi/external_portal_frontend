@@ -104,48 +104,74 @@ export default function MasterItemPage() {
   const handleSaveAll = async () => {
     setSaving(true);
     let success = true;
-    // Upsert each row: update if id exists, create if not
-    for (const row of data) {
-      if (row && typeof row === 'object') {
-        const {
-          vehicle,
-          vehicleId,
-          category,
-          productName,
-          spType,
-          itemId,
-          isActive,
-          price
-        } = row;
-        try {
-          if (row.id) {
-            await updateMasterItem(row.id, {
-              vehicle,
-              vehicleId,
-              category,
-              productName,
-              spType,
-              itemId,
-              isActive,
-              price
-            });
-          } else {
-            await createMasterItem({
-              vehicle,
-              vehicleId,
-              category,
-              productName,
-              spType,
-              itemId,
-              isActive,
-              price
-            });
-          }
-        } catch {
-          success = false;
+    // Filter out rows where all fields except isActive are empty
+    const filteredRows = data.filter(row => {
+      if (!row || typeof row !== 'object') return false;
+      // Check if all fields except isActive are empty
+      const keysToCheck = ['vehicle', 'vehicleId', 'category', 'productName', 'spType', 'itemId', 'price'];
+      return keysToCheck.some(key => row[key] && String(row[key]).trim() !== '');
+    });
+
+    // Get all current IDs from the backend
+    let currentItems = [];
+    try {
+      currentItems = await getMasterItems();
+    } catch {}
+    const currentIds = Array.isArray(currentItems) ? currentItems.map(i => i.id) : [];
+    const updatedIds = filteredRows.filter(r => r.id).map(r => r.id);
+    // IDs to delete: exist in backend but not in updated data
+    const idsToDelete = currentIds.filter(id => !updatedIds.includes(id));
+
+    // Upsert each filtered row
+    for (const row of filteredRows) {
+      const {
+        vehicle,
+        vehicleId,
+        category,
+        productName,
+        spType,
+        itemId,
+        isActive,
+        price
+      } = row;
+      try {
+        if (row.id) {
+          await updateMasterItem(row.id, {
+            vehicle,
+            vehicleId,
+            category,
+            productName,
+            spType,
+            itemId,
+            isActive,
+            price
+          });
+        } else {
+          await createMasterItem({
+            vehicle,
+            vehicleId,
+            category,
+            productName,
+            spType,
+            itemId,
+            isActive,
+            price
+          });
         }
+      } catch {
+        success = false;
       }
     }
+
+    // Delete items not present in updated data
+    for (const id of idsToDelete) {
+      try {
+        await deleteMasterItem(id);
+      } catch {
+        success = false;
+      }
+    }
+
     if (success) {
       setSnackbar({ open: true, message: 'All changes saved', severity: 'success' });
       const items = await getMasterItems();

@@ -1,5 +1,4 @@
 import { API } from "..";
-import axios from "axios";
 
 const BASE = "/distro-po/masteritem";
 

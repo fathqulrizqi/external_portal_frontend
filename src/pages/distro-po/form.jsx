@@ -5,7 +5,7 @@ function greyedReadOnlyRenderer(instance, td, row, col, prop, value, cellPropert
   td.style.color = '#505660ff'; // Tailwind gray-700 (dark for readability)
 }
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchNgkaxSONumbers } from '../../api/NGKAX/NGKAX';
 import { useParams } from 'react-router-dom';
 import { getDistributorPOById } from '../../api/distro-po/distro-po';
 import { HotTable } from '@handsontable/react';
@@ -190,23 +190,12 @@ const DistributorPOForm = () => {
 
     // If poNumber changes, fetch SO number(s) from API
     if (name === 'poNumber' && value) {
-      try {
-        const res = await axios.get(`/api/sales/d365-import-form-sales?poNumber=${encodeURIComponent(value)}`);
-        if (res.data && res.data.success && Array.isArray(res.data.data)) {
-          // Collect SO numbers, join with comma
-          const soNumbers = res.data.data.map(item => item.soNumber).filter(Boolean);
-          const ngkaxSOValue = soNumbers.length > 0 ? soNumbers.join(', ') : '';
-          setHeaderInfo(prev => ({
-            ...prev,
-            ngkaxSO: ngkaxSOValue
-          }));
-          console.log('Fetched NGKAX SO Numbers:', ngkaxSOValue);
-        }
-      } catch (err) {
-        // Optionally handle error
-        setHeaderInfo(prev => ({ ...prev, ngkaxSO: '' }));
-        console.log('Fetched NGKAX SO Numbers:', '');
-      }
+      const ngkaxSOValue = await fetchNgkaxSONumbers(value);
+      setHeaderInfo(prev => ({
+        ...prev,
+        ngkaxSO: ngkaxSOValue
+      }));
+      console.log('Fetched NGKAX SO Numbers:', ngkaxSOValue);
     }
   };
 
