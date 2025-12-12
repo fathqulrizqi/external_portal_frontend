@@ -51,7 +51,7 @@ const handleSubmit = async (e) => {
     const { data } = await API.post(
       "/users/OTPRegistrationVerification",
       { otp: code },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `${token}` } }
     );
 
     if (data.status !== "Success") {

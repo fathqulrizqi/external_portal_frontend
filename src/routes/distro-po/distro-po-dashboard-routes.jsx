@@ -4,11 +4,12 @@ import DistributorPOForm from "../../pages/distro-po/form";
 import POList from "../../pages/distro-po/POList";
 import POSummary from "../../pages/distro-po/POSummary";
 import MasterItemPage from "../../pages/distro-po/MasterItem";
+import RequireAuth from "../../middleware/RequireAuth";
 
 export const DistroPoDashboardRoutes = [
   {
     path: "/distro-po/dashboard",
-    element: <DashboardLayout />,
+    element: <RequireAuth><DashboardLayout /></RequireAuth>,
     children: [
       { index: true, element: <DistroPoLandingPage /> },
 

@@ -55,7 +55,7 @@ function LoginOtp() {
       { otp: code },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `${token}`,
         },
       }
     );
