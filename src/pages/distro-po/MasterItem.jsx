@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../api/distro-po/masteritem';
+import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../utils/constants/master-item';
+// import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../api/distro-po/masteritem';
 import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 
-// Custom renderer for price column to add comma delimiter
 function priceCommaRenderer(instance, td, row, col, prop, value, cellProperties) {
   Handsontable.renderers.TextRenderer.apply(this, arguments);
   if (typeof value === 'number' && !isNaN(value)) {
@@ -105,60 +105,59 @@ export default function MasterItemPage() {
     }
   };
 
-  const handleSaveAll = async () => {
+const handleSaveAll = async () => {
     setSaving(true);
     let success = true;
-    for (const row of data) {
-      if (row && typeof row === 'object') {
-        const {
-          vehicle,
-          vehicleId,
-          category,
-          productName,
-          spType,
-          itemId,
-          isActive,
-          price
-        } = row;
-        try {
-          if (row.id) {
-            await updateMasterItem(row.id, {
-              vehicle,
-              vehicleId,
-              category,
-              productName,
-              spType,
-              itemId,
-              isActive,
-              price
-            });
-          } else {
-            await createMasterItem({
-              vehicle,
-              vehicleId,
-              category,
-              productName,
-              spType,
-              itemId,
-              isActive,
-              price
-            });
-          }
-        } catch {
-          success = false;
+
+    const itemsToSave = data.filter(row => 
+      row && typeof row === 'object' && Object.values(row).some(val => val !== '' && val !== null && val !== false && val !== 0)
+    );
+
+    for (const row of itemsToSave) {
+      const {
+        id, 
+        vehicle,
+        vehicleId,
+        category,
+        productName,
+        spType,
+        itemId,
+        isActive,
+        price
+      } = row;
+
+      const itemPayload = {
+        vehicle,
+        vehicleId,
+        category,
+        productName,
+        spType,
+        itemId,
+        isActive,
+        price: price === '' ? 0 : Number(price), 
+      };
+
+      try {
+        if (id) {
+          await updateMasterItem(id, itemPayload);
+        } else {
+          await createMasterItem(itemPayload);
         }
+      } catch (e) {
+        console.error("Save failed for row:", row, e);
+        success = false;
       }
     }
+    
     if (success) {
       showNotification('All changes saved successfully', 'success');
-      await fetchItems();
+      await fetchItems(); 
       setUnsaved(false);
     } else {
       showNotification('Some changes failed to save', 'error');
     }
     setSaving(false);
   };
-
   const handleExportData = () => {
     const hot = hotTableComponent.current.hotInstance;
     const exportPlugin = hot.getPlugin('exportFile');
