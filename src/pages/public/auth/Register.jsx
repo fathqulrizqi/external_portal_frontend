@@ -1,15 +1,23 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { register } from "../../../api/auth";
-import imgBackground from "../../../assets/images/cover-register.png";
-import { login } from "../../../api/auth";
+import { register, login } from "../../../api/auth";
 import { navigateByRole } from "../../../utils/navigateByRole";
+
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Divider } from "primereact/divider";
+
+import { authSchema } from "../../../utils/auth-schema";
+import { validateForm } from "../../../utils/constants/validateForm";
 
 function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
 
-  const segment = location.pathname.split("/")[1]; 
-  const appName = segment || "public";
+  const appName = location.pathname.split("/")[1] || "public";
   const basePath = `/${appName}`;
 
   const [form, setForm] = useState({
@@ -22,203 +30,268 @@ function Register() {
   });
 
   const [errorMsg, setErrorMsg] = useState("");
-  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
-      setForm({
-        ...form,
-        [e.target.name]: e.target.value,
-      });
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  
+  const updatedForm = { ...form, [name]: value };
+  setForm(updatedForm);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMsg("");
-  setErrors({});
+  const validationErrors = validateForm(authSchema, updatedForm);
+  
+  setErrors((prevErrors) => ({
+    ...prevErrors,
+    [name]: validationErrors[name] 
+  }));
+};
 
-  if (form.password !== form.passwordConfirm) {
-    setErrors({ passwordConfirm: "Password does not match" });
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitted(true);
 
-  const result = await register(form);
+    const validationErrors = validateForm(authSchema, form);
+    setErrors(validationErrors);
 
-  if (!result.success) {
-    if (result.message === "redirect-login") {
-      alert("Already registered!");
-      navigate(`${basePath}/login`, { replace: true });
+    const reg = await register(form);
+
+    if (!reg.success) {
+      if (reg.message === "redirect-login") {
+        navigate(`${basePath}/login`, { replace: true });
+        return;
+      }
+      setErrorMsg(reg.message);
       return;
     }
 
-    setErrorMsg(result.message);
-    return;
-  }
+    sessionStorage.setItem(
+      "tempRegister",
+      JSON.stringify({
+        email: form.email,
+        password: form.password,
+        application: form.application,
+      })
+    );
 
-  // === SAVE TEMP REGISTER DATA FOR OTP PAGE ===
-  sessionStorage.setItem("tempRegister", JSON.stringify({
-    email: form.email,
-    password: form.password,
-    application: form.application,
-  }));
+    const loginRes = await login({
+      email: form.email,
+      password: form.password,
+      application: form.application,
+    });
 
-  // === TRY AUTO LOGIN (backend will force OTP if not active) ===
-  const loginRes = await login({
-    email: form.email,
-    password: form.password,
-    application: form.application,
-  });
-
-  if (!loginRes.success) {
-    if (loginRes.message === "redirect-register-otp") {
-      alert("Account is not active!");
+    if (!loginRes.success) {
       navigate(`${basePath}/register-otp`, { replace: true });
       return;
     }
 
-    if (loginRes.message === "redirect-login") {
-      alert("Invalid credentials!");
-      navigate(`${basePath}/login`, { replace: true });
-      return;
-    }
+    const role = JSON.parse(localStorage.getItem("role"));
+    navigateByRole(role, navigate, appName);
+  };
 
-    setErrorMsg(loginRes.message);
-    return;
-  }
+  const passwordRules = {
+    lowercase: /[a-z]/,
+    uppercase: /[A-Z]/,
+    number: /[0-9]/,
+    length: /.{8,}/,
+  };
 
-  // === LOGIN SUCCESS ===
-  const role = JSON.parse(localStorage.getItem("role"));
+  const passwordStatus = {
+    lowercase: passwordRules.lowercase.test(form.password),
+    uppercase: passwordRules.uppercase.test(form.password),
+    number: passwordRules.number.test(form.password),
+    length: passwordRules.length.test(form.password),
+  };
 
-  navigateByRole(role, navigate, appName);
-};
+  const isPasswordValid = Object.values(passwordStatus).every(Boolean);
 
+  const isPasswordMismatch =
+    form.passwordConfirm.length > 0 && form.password !== form.passwordConfirm;
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-      <img
-        src={imgBackground}
-        alt="background"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+    <div className="py-16 bg-slate-50 flex items-center justify-center px-4">
+  <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
 
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Register</h1>
+    {/* Title */}
+    <div className="text-center md:text-left px-2">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800">
+  Create Account
+</h2>
 
-        {/* PESAN KESALAHAN UMUM */}
-        {errorMsg && (
-          <p className="text-red-600 text-center mb-3">{errorMsg}</p>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
+      <p className="text-slate-600 mt-2">
+        Join the Distributor PO Portal
+      </p>
+    </div>
+        <form onSubmit={handleSubmit} className="space-y-4 p-fluid">
           {/* Full Name */}
-          <div>
-            <label className="block font-medium mb-1">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Full Name
+            </label>
+            <InputText
+              name="fullName" // Pastikan ada name untuk handleChange
               value={form.fullName}
+              placeholder="Enter your full name"
               onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded-lg outline-none ${
-                errors.fullName ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="your full name..."
+              invalid={submitted && !!errors.fullName} // Gunakan prop invalid
+              className="w-full"
             />
-            {errors.fullName && (
-              <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+            {submitted && errors.fullName && (
+              <small className="p-error text-red-600">{errors.fullName}</small>
             )}
           </div>
 
-            {/* Role ID (hidden) */}
-            <input type="hidden" name="roleId" value={form.roleId} />
-
           {/* Email */}
-          <div>
-            <label className="block font-medium mb-1">Email</label>
-            <input
-              type="email"
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">Email</label>
+            <InputText
               name="email"
               value={form.email}
               onChange={handleChange}
-             className={`w-full border px-3 py-2 rounded-lg outline-none transition
-              ${errors.email ? "border-red-500 bg-red-50" : "border-gray-300"}
-            `}
-              placeholder="email..."
+              placeholder="youremail@mail.com"
+              invalid={submitted && !!errors.email}
+              className="w-full"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            {submitted && errors.email && (
+              <small className="p-error text-red-600">{errors.email}</small>
             )}
           </div>
 
-          {/* Phone */}
-          <div>
-            <label className="block font-medium mb-1">Phone</label>
-            <input
-              type="text"
-              name="phone"
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">Phone</label>
+            <InputText
               value={form.phone}
+              placeholder="0812345678"
+              name="phone"
+              invalid={submitted && !!errors.phone}
               onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded-lg outline-none ${
-                errors.phone ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="phone number..."
+              className={`w-full ${submitted && errors.phone ? "invalid" : ""}`}
             />
-            {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+            {submitted && errors.phone && (
+              <small className="p-error text-red-600">{errors.phone}</small>
             )}
           </div>
 
-          {/* Password */}
-          <div>
-            <label className="block font-medium mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Password
+            </label>
+            <Password
+            name="password"
+              inputId="password"
               value={form.password}
+              placeholder="Enter your Password"
               onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded-lg outline-none ${
-                errors.password ? "border-red-500" : "border-gray-300"
+              toggleMask
+              feedback
+              promptLabel="Enter a password"
+              weakLabel="Weak"
+              mediumLabel="Medium"
+              strongLabel="Strong"
+              style={{ width: "100%" }}
+              invalid={submitted && !!errors.password}
+              className="w-full"
+              inputClassName={`w-full ${
+                form.password && !isPasswordValid ? "p-invalid" : ""
               }`}
-              placeholder="password..."
+              header={
+                <div className="font-semibold mb-2">Password strength</div>
+              }
+              footer={
+                <>
+                  <p className="text-sm font-medium mb-2">
+                    Password must contain:
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.lowercase
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      One lowercase letter
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.uppercase
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      One uppercase letter
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.number
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      One number
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.length
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      Minimum 8 characters
+                    </li>
+                  </ul>
+                </>
+              }
             />
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-            )}
+    <small className="p-error text-red-600">{errors.password}</small>
+  )}
           </div>
 
-          {/* Confirm Password */}
-          <div>
-            <label className="block font-medium mb-1">Confirm Password</label>
-            <input
-              type="password"
-              name="passwordConfirm"
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Confirm Password
+            </label>
+
+            <Password
               value={form.passwordConfirm}
-              onChange={handleChange}
-              className={`w-full border px-3 py-2 rounded-lg outline-none ${
-                errors.passwordConfirm ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="confirm password..."
+              placeholder="Enter your confirm password"
+             onChange={handleChange}
+              toggleMask
+              feedback={false}
+              name="passwordConfirm"
+              className="w-full"
+              invalid={submitted && !!errors.passwordConfirm}
+              inputClassName={`w-full ${isPasswordMismatch ? "p-invalid" : ""}`}
             />
-            {errors.passwordConfirm && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.passwordConfirm}
-              </p>
+{errors.passwordConfirm && (
+    <small className="p-error text-red-600">{errors.passwordConfirm}</small>
+  )}
+            {isPasswordMismatch && (
+              <small className="text-red-600">Password does not match</small>
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            label="Create Account"
+            icon="pi pi-user-plus"
+            className="w-full"
+          />
+          
+        <p className="text-center text-sm mt-2">
+          Already have an account?{" "}
+          <Link
+            to={`${basePath}/login`}
+            className="text-blue-600 font-semibold"
           >
-            Register
-          </button>
-        </form>
-
-        <p className="text-center mt-4 text-sm">
-          Sudah punya akun?{" "}
-          <Link to={`${basePath}/login`} className="text-blue-600 hover:underline">
-            Masuk
+            Sign In
           </Link>
         </p>
+        </form>
+
       </div>
     </div>
   );
