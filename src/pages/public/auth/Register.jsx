@@ -8,7 +8,7 @@ import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 
-import { authSchema } from "../../../utils/auth-schema";
+import { registerSchema } from "../../../utils/auth-schema";
 import { validateForm } from "../../../utils/constants/validateForm";
 
 function Register() {
@@ -31,25 +31,25 @@ function Register() {
 
   const [errorMsg, setErrorMsg] = useState("");
 
-const handleChange = (e) => {
-  const { name, value } = e.target;
-  
-  const updatedForm = { ...form, [name]: value };
-  setForm(updatedForm);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  const validationErrors = validateForm(authSchema, updatedForm);
-  
-  setErrors((prevErrors) => ({
-    ...prevErrors,
-    [name]: validationErrors[name] 
-  }));
-};
+    const updatedForm = { ...form, [name]: value };
+    setForm(updatedForm);
+
+    const validationErrors = validateForm(registerSchema, updatedForm);
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: validationErrors[name],
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
 
-    const validationErrors = validateForm(authSchema, form);
+    const validationErrors = validateForm(registerSchema, form);
     setErrors(validationErrors);
 
     const reg = await register(form);
@@ -108,18 +108,15 @@ const handleChange = (e) => {
 
   return (
     <div className="py-16 bg-slate-50 flex items-center justify-center px-4">
-  <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        {/* Title */}
+        <div className="text-center md:text-left px-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800">
+            Create Account
+          </h2>
 
-    {/* Title */}
-    <div className="text-center md:text-left px-2">
-      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800">
-  Create Account
-</h2>
-
-      <p className="text-slate-600 mt-2">
-        Join the Distributor PO Portal
-      </p>
-    </div>
+          <p className="text-slate-600 mt-2">Join the Distributor PO Portal</p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-fluid">
           {/* Full Name */}
           <div className="space-y-1">
@@ -175,7 +172,7 @@ const handleChange = (e) => {
               Password
             </label>
             <Password
-            name="password"
+              name="password"
               inputId="password"
               value={form.password}
               placeholder="Enter your Password"
@@ -246,8 +243,8 @@ const handleChange = (e) => {
               }
             />
             {errors.password && (
-    <small className="p-error text-red-600">{errors.password}</small>
-  )}
+              <small className="p-error text-red-600">{errors.password}</small>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -258,7 +255,7 @@ const handleChange = (e) => {
             <Password
               value={form.passwordConfirm}
               placeholder="Enter your confirm password"
-             onChange={handleChange}
+              onChange={handleChange}
               toggleMask
               feedback={false}
               name="passwordConfirm"
@@ -266,9 +263,11 @@ const handleChange = (e) => {
               invalid={submitted && !!errors.passwordConfirm}
               inputClassName={`w-full ${isPasswordMismatch ? "p-invalid" : ""}`}
             />
-{errors.passwordConfirm && (
-    <small className="p-error text-red-600">{errors.passwordConfirm}</small>
-  )}
+            {errors.passwordConfirm && (
+              <small className="p-error text-red-600">
+                {errors.passwordConfirm}
+              </small>
+            )}
             {isPasswordMismatch && (
               <small className="text-red-600">Password does not match</small>
             )}
@@ -280,18 +279,17 @@ const handleChange = (e) => {
             icon="pi pi-user-plus"
             className="w-full"
           />
-          
-        <p className="text-center text-sm mt-2">
-          Already have an account?{" "}
-          <Link
-            to={`${basePath}/login`}
-            className="text-blue-600 font-semibold"
-          >
-            Sign In
-          </Link>
-        </p>
+          <Divider />
+          <p className="text-center text-sm mt-2">
+            Already have an account?{" "}
+            <Link
+              to={`${basePath}/login`}
+              className="text-blue-600 font-semibold"
+            >
+              Sign In
+            </Link>
+          </p>
         </form>
-
       </div>
     </div>
   );

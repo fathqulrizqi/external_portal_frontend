@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const authSchema = Joi.object({
+export const registerSchema = Joi.object({
   fullName: Joi.string().required().messages({
     "string.empty": "Full name is required",
   }),
@@ -39,3 +39,15 @@ export const authSchema = Joi.object({
       "string.empty": "Confirm password is required",
     }),
 });
+
+
+export const loginSchema = Joi.object({
+  email: Joi.string().email({ tlds: false }).required().messages({
+    "string.empty": "Email is required",
+    "string.email": "Email is not valid",
+  }),
+
+  password: Joi.string().required().messages({
+    "string.empty": "Password is required",
+  }),
+}).unknown(true);;

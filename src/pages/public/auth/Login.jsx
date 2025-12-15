@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { login } from "../../../api/auth";
-import Swal from "sweetalert2";
-import { setRole } from "../../../utils/cookies";
 import { navigateByRole } from "../../../utils/navigateByRole";
-import { Input, Button, Field, Label, Fieldset } from "@headlessui/react";
+
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Message } from "primereact/message";
+import { Divider } from "primereact/divider";
+
+import { loginSchema } from "../../../utils/auth-schema";
+import { validateForm } from "../../../utils/constants/validateForm";
 
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const segment = location.pathname.split("/")[1];
-  const appName = segment || "public";
+  const appName = location.pathname.split("/")[1] || "public";
   const basePath = `/${appName}`;
 
   const [form, setForm] = useState({
@@ -20,129 +25,133 @@ function Login() {
     application: appName,
   });
 
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  /* ======================
+     HANDLE CHANGE
+  ====================== */
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    const updatedForm = { ...form, [name]: value };
+    setForm(updatedForm);
+
+    // validate per field
+    const validationErrors = validateForm(loginSchema, updatedForm);
+    setErrors(validationErrors);
   };
 
+  /* ======================
+     HANDLE SUBMIT
+  ====================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitted(true);
+    setErrorMsg("");
+    const { email, password } = form;
+    const validationErrors = validateForm(loginSchema, { email, password });
+
+    setErrors(validationErrors);
+
+    // 🚫 stop kalau ada error
+    if (Object.keys(validationErrors).length > 0) return;
 
     const result = await login(form);
 
     if (!result.success) {
-      if (result.message === "redirect-login") {
-        alert("Invalid Email or Password!");
-        navigate(`${basePath}/login`, { replace: true });
-        return;
-      }
-      if (result.message === "redirect-register") {
-        alert(
-          "Invalid email. Check your email. If you don't have account, please register!"
-        );
-        return;
-      }
-      setErrorMsg(result.message);
+      setErrorMsg("Invalid email or password");
       return;
     }
+
     const role = JSON.parse(localStorage.getItem("role"));
     navigateByRole(role, navigate, appName);
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-64px)] py-16 flex items-center justify-center px-4">
-      {/* Background that blends with a typical blue navbar */}
-      {/* If your navbar is e.g. bg-[#0b1e3a], this gradient softly transitions from that tone */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,_rgba(11,30,58,0.06)_0%,_rgba(11,30,58,0.02)_180px,_transparent_181px)]" />
-        <div className="absolute inset-0 bg-slate-50" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md">
-        {/* Page heading */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-slate-900">
+  <div className="py-32 bg-slate-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        {/* Title */}
+        <div className="text-center md:text-left px-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800">
             Login
-          </h1>
-          <p className="text-slate-600 mt-1">Sign in to your account</p>
+          </h2>
+
+          <p className="text-slate-600 mt-2">Login into Distributor PO Portal</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200">
-          {errorMsg && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm text-center">{errorMsg}</p>
-            </div>
-          )}
+        {errorMsg && (
+          <Message severity="error" text={errorMsg} className="mb-4" />
+        )}
 
-          <form onSubmit={handleSubmit}>
-            <Fieldset className="space-y-6">
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Email Address
-                </Label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition duration-200 text-slate-900 placeholder:text-slate-400"
-                  placeholder="you@company.com"
-                  required
-                />
-              </Field>
-
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Password
-                </Label>
-                <Input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition duration-200 text-slate-900 placeholder:text-slate-400"
-                  placeholder="Enter your password"
-                  required
-                />
-              </Field>
-
-              <div className="flex items-center justify-between">
-                <Link
-                  to="/reset-password"
-                  className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline transition"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-sm hover:shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-              >
-                Sign In
-              </Button>
-            </Fieldset>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-center text-sm text-slate-600">
-              Don't have an account?{" "}
-              <Link
-                to={`${basePath}/register`}
-                className="font-semibold text-blue-700 hover:text-blue-800 hover:underline transition"
-              >
-                Create Account
-              </Link>
-            </p>
+        <form onSubmit={handleSubmit} className="space-y-4 p-fluid">
+          {/* Email */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">Email</label>
+            <InputText
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="youremail@mail.com"
+              className="w-full"
+              invalid={submitted && !!errors.email}
+            />
+            {submitted && errors.email && (
+              <small className="p-error">{errors.email}</small>
+            )}
           </div>
-        </div>
 
+          {/* Password */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Password
+            </label>
+            <Password
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              toggleMask
+              feedback={false}
+              placeholder="Enter your password"
+              className="w-full"
+              inputClassName="w-full"
+              invalid={submitted && !!errors.password}
+            />
+            {submitted && errors.password && (
+              <small className="p-error">{errors.password}</small>
+            )}
+          </div>
+
+          <div className="flex justify-start">
+            <Link
+              to={`${basePath}/reset-password`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
+          <Button
+            type="submit"
+            label="Sign In"
+            icon="pi pi-sign-in"
+            className="w-full"
+          />
+          <Divider />
+
+        <p className="text-center text-sm">
+          Don't have an account?{" "}
+          <Link
+            to={`${basePath}/register`}
+            className="text-blue-600 font-semibold"
+          >
+            Create Account
+          </Link>
+        </p>
+        </form>
+
+       
       </div>
     </div>
   );

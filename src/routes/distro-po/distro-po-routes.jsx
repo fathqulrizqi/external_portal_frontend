@@ -12,6 +12,7 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import RequireAuth from "../../middleware/RequireAuth";
 import RegisterOtp from "../../pages/public/auth/RegisterOtp";
 import LoginOtp from "../../pages/public/auth/LoginOtp";
+import ResetPassword from "../../pages/public/auth/ResetPassword";
 
 // PUBLIC
 export const DistroPoRoutes = [
@@ -23,6 +24,7 @@ export const DistroPoRoutes = [
 
       { path: "login", element: <GuestOnly><Login /></GuestOnly> },
       { path: "login-otp", element: <GuestOnly><LoginOtp /></GuestOnly> },
+      { path: "reset-password", element: <GuestOnly><ResetPassword /></GuestOnly> },
 
       { path: "register", element: <GuestOnly><Register /></GuestOnly> },
       { path: "register-otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },

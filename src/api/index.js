@@ -2,8 +2,8 @@ import axios from "axios";
 import { getClientUUID } from "../utils/device";
 import { getToken } from "../utils/cookies";
 
-//const url = "http://192.168.0.16:3001";
-const url = "http://localhost:3001";
+const url = "http://192.168.0.16:3001";
+// const url = "http://localhost:3001";
 
 export const API = axios.create({
   baseURL: `${url}/api`,
