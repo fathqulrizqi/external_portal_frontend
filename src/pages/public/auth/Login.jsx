@@ -29,23 +29,16 @@ function Login() {
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  /* ======================
-     HANDLE CHANGE
-  ====================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     const updatedForm = { ...form, [name]: value };
     setForm(updatedForm);
 
-    // validate per field
     const validationErrors = validateForm(loginSchema, updatedForm);
     setErrors(validationErrors);
   };
 
-  /* ======================
-     HANDLE SUBMIT
-  ====================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
@@ -55,7 +48,6 @@ function Login() {
 
     setErrors(validationErrors);
 
-    // 🚫 stop kalau ada error
     if (Object.keys(validationErrors).length > 0) return;
 
     const result = await login(form);
