@@ -44,6 +44,34 @@ function Register() {
       [name]: validationErrors[name],
     }));
   };
+  const PASSWORD_MIN = 10;
+
+  const mediumRegex = /^(?=.*[a-z])(?=.*[A-Z]).{10,}$/;
+
+  const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+  const myPasswordValidator = (value) => {
+    if (!value) return 0;
+
+    const hasLower = /[a-z]/.test(value);
+    const hasUpper = /[A-Z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasLength = value.length >= 12;
+
+    if (hasLower && hasUpper && hasNumber && hasLength) {
+      return 2;
+    }
+
+    if (
+      (hasLower && hasUpper) ||
+      (hasLower && hasNumber) ||
+      (hasUpper && hasNumber) ||
+      (hasLength && hasLength)
+    ) {
+      return 1; // Medium
+    }
+
+    return 0; // Weak
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,8 +80,11 @@ function Register() {
     const validationErrors = validateForm(registerSchema, form);
     setErrors(validationErrors);
 
-    const reg = await register(form);
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
+    const reg = await register(form);
     if (!reg.success) {
       if (reg.message === "redirect-login") {
         navigate(`${basePath}/login`, { replace: true });
@@ -91,17 +122,15 @@ function Register() {
     lowercase: /[a-z]/,
     uppercase: /[A-Z]/,
     number: /[0-9]/,
-    length: /.{8,}/,
+    length: /.{12,}/,
   };
 
   const passwordStatus = {
-    lowercase: passwordRules.lowercase.test(form.password),
-    uppercase: passwordRules.uppercase.test(form.password),
-    number: passwordRules.number.test(form.password),
-    length: passwordRules.length.test(form.password),
+    lowercase: /[a-z]/.test(form.password),
+    uppercase: /[A-Z]/.test(form.password),
+    number: /[0-9]/.test(form.password),
+    length: form.password.length >= 10,
   };
-
-  const isPasswordValid = Object.values(passwordStatus).every(Boolean);
 
   const isPasswordMismatch =
     form.passwordConfirm.length > 0 && form.password !== form.passwordConfirm;
@@ -173,25 +202,18 @@ function Register() {
             </label>
             <Password
               name="password"
-              inputId="password"
               value={form.password}
-              placeholder="Enter your Password"
               onChange={handleChange}
               toggleMask
               feedback
-              promptLabel="Enter a password"
+              placeholder="Enter your Password"
+              mediumRegex={mediumRegex}
+              strongRegex={strongRegex}
               weakLabel="Weak"
               mediumLabel="Medium"
               strongLabel="Strong"
-              style={{ width: "100%" }}
               invalid={submitted && !!errors.password}
               className="w-full"
-              inputClassName={`w-full ${
-                form.password && !isPasswordValid ? "p-invalid" : ""
-              }`}
-              header={
-                <div className="font-semibold mb-2">Password strength</div>
-              }
               footer={
                 <>
                   <p className="text-sm font-medium mb-2">
@@ -236,12 +258,13 @@ function Register() {
                             : "pi-times-circle text-slate-400"
                         }`}
                       />
-                      Minimum 8 characters
+                      Minimum 10 characters
                     </li>
                   </ul>
                 </>
               }
             />
+
             {errors.password && (
               <small className="p-error text-red-600">{errors.password}</small>
             )}

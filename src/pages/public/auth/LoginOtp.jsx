@@ -1,159 +1,148 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom"; 
+import { InputOtp } from "primereact/inputotp";
+import { Button } from "primereact/button"; 
+import { Divider } from "primereact/divider"; 
 import { API } from "../../../api";
 import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
 import { navigateByRole } from "../../../utils/navigateByRole";
-import { getToken, setToken, setRole } from "../../../utils/cookies";
+import { getToken } from "../../../utils/cookies";
+
 function LoginOtp() {
   const navigate = useNavigate();
-  const inputRefs = useRef([]);
+  const location = useLocation(); // Gunakan useLocation
 
-  const segment = location.pathname.split("/")[1]; 
+  const segment = location.pathname.split("/")[1];
   const appName = segment || "public";
-  const basePath = `/${appName}`;
+  const basePath = `/${appName}`; // Tambahkan basePath untuk link kembali
 
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState("");
   const { timer, resetTimer, formatTime } = useOtpTimer(120);
   const [errorMsg, setErrorMsg] = useState("");
   const [resending, setResending] = useState(false);
 
-  const handleChange = (value, i) => {
-    if (!/^[0-9]?$/.test(value)) return;
-
-    const updated = [...otp];
-    updated[i] = value;
-    setOtp(updated);
-
-    if (value && i < 5) {
-      inputRefs.current[i + 1].focus();
-    }
-  };
-
-  const handleKeyDown = (e, i) => {
-    if (e.key === "Backspace" && !otp[i] && i > 0) {
-      inputRefs.current[i - 1].focus();
-    }
-  };
-
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const code = otp.join("");
-
-  if (code.length !== 6) {
-    return setErrorMsg("OTP must be 6 digits.");
-  }
-
-  try {
-    // ambil token yang sudah disimpan waktu login
-    const token = getToken();
-
-    // verifikasi OTP
-    const { data } = await API.post(
-      "/users/OTPVerification",
-      { otp: code },
-      {
-        headers: {
-          Authorization: `${token}`,
-        },
-      }
-    );
-
-    if (data.status !== "Success") {
-      return setErrorMsg(data.message);
+    if (otp.length !== 6) {
+      return setErrorMsg("OTP must be 6 digits.");
     }
 
-    alert("OTP Valid!");
+    try {
+      // NOTE: token is fetched from cookie (getToken())
+      const token = getToken();
 
-    const role = JSON.parse(localStorage.getItem("role")); 
-    navigateByRole(role, navigate, appName);
+      const { data } = await API.post(
+        "/users/OTPVerification",
+        { otp },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
 
-  } catch (err) {
-    console.log(err);
-    setErrorMsg("Verification failed");
-  }
-};
+      if (data.status !== "Success") {
+        return setErrorMsg(data.message);
+      }
 
+      // NOTE: role is fetched from localStorage.getItem("role")
+      const role = JSON.parse(localStorage.getItem("role"));
+      navigateByRole(role, navigate, appName);
 
-const handleResend = async () => {
-  if (resending) return; // Prevent double trigger
-  setResending(true);
-  setErrorMsg("");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Verification failed");
+    }
+  };
 
-  try {
-    await API.post("/users/OTP");
-    resetTimer();
-    setOtp(["", "", "", "", "", ""]);
-    inputRefs.current[0].focus();
-  } catch {
-    setErrorMsg("Failed to resend OTP");
-  }
+  const handleResend = async () => {
+    if (resending) return;
 
-  setResending(false);
-};
+    setResending(true);
+    setErrorMsg("");
+
+    try {
+      const token = getToken();
+      await API.post("/users/OTP", null, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      resetTimer();
+      setOtp("");
+    } catch {
+      setErrorMsg("Failed to resend OTP. Please try logging in again.");
+    }
+
+    setResending(false);
+  };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-      <img
-        src={imgBackground}
-        alt="background"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
-
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
-
-        <h1 className="text-2xl font-bold text-center mb-3">OTP Verification</h1>
-        <p className="text-center text-gray-600 mb-6">
-          Enter the 6-digit OTP sent to your email
+    <div className="py-32 bg-slate-50 flex justify-center px-4">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 space-y-4">
+        
+        <h2 className="text-2xl font-bold text-center">OTP Verification</h2>
+        
+        <p className="text-center text-gray-600">
+          Enter the 6-digit OTP sent to your registered email.
         </p>
 
         {errorMsg && (
-          <p className="text-red-600 text-center mb-3">{errorMsg}</p>
+          <p className="text-red-600 text-center">{errorMsg}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* OTP Inputs */}
-          <div className="flex justify-between">
-            {otp.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => (inputRefs.current[i] = el)}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleChange(e.target.value, i)}
-                onKeyDown={(e) => handleKeyDown(e, i)}
-                className="w-12 h-14 border rounded-lg text-center text-xl font-bold focus:ring focus:ring-blue-300 outline-none"
-              />
-            ))}
+          {/* PrimeReact OTP */}
+          <div className="flex justify-center">
+            <InputOtp
+              value={otp}
+              onChange={(e) => setOtp(e.value)}
+              length={6}
+              integerOnly
+              className="otp-input"
+            />
           </div>
 
-          {/* Countdown */}
-          <p className="text-center text-gray-700">
+          <p className="text-center text-gray-700 text-sm">
             {timer > 0 ? (
-              <>Resend OTP in <span className="font-semibold">{formatTime()}</span></>
+              <>
+                Haven't received the code? Resend in{" "}
+                <b className="text-blue-600">{formatTime()}</b>
+              </>
             ) : (
               <button
                 type="button"
                 onClick={handleResend}
-                className="text-blue-600 font-medium hover:underline"
                 disabled={resending}
+                className={`font-semibold cursor-pointer ${resending ? 'text-slate-400' : 'text-blue-600 hover:underline'}`}
               >
                 {resending ? "Sending..." : "Resend OTP"}
               </button>
             )}
           </p>
 
-          <button
+          <Button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Verify
-          </button>
+            label="Verify Account"
+            icon="pi pi-check-circle"
+            className="w-full"
+            disabled={otp.length !== 6}
+          />
 
         </form>
+        <Divider />
+        <p className="text-center text-sm">
+          Return to{" "}
+          <Link
+            to={`${basePath}/login`}
+            className="text-blue-600 font-semibold"
+          >
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );
