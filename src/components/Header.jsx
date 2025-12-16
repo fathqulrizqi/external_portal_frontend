@@ -5,7 +5,7 @@ import { useActiveBreakpoint } from "../hooks/useBreakpoints"
 /* ---------------------------------------------------
    COMPONENTS
 --------------------------------------------------- */
-function Logo({ width, height, }) {
+function Logo({ width, height }) {
   return (
     <Link to="/" className="block">
       <div style={{ width, height }} className="relative shrink-0 cursor-pointer">
@@ -81,7 +81,7 @@ function MobileMenuIcon() {
 function NavbarLayout({ logoSize, showFullMenu, menus, showAuth, authBasePath }) {
   return (
     <nav className="bg-white w-full">
-      <div className="flex items-center px-[48px] py-[16px] w-full">
+      <div className="flex items-center px-[48px] w-full">
         <Logo width={logoSize.w} height={logoSize.h} />
 
         <div className="flex grow justify-end">
@@ -107,7 +107,7 @@ export default function Header({ menus, showAuth, authBasePath }) {
 
   return (
     <NavbarLayout
-      logoSize={width < 800 ? { w: 140, h: 60 } : { w: 200, h: 80 }}
+      logoSize={width < 800 ? { w: 140, h: 60 } : { w: 180, h: 80 }}
       showFullMenu={width >= 800}
       menus={menus}
       showAuth={showAuth}
