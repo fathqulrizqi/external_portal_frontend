@@ -1,79 +1,95 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import imgBackground from "../../../assets/images/cover-register.png";
+import { Link, useLocation } from "react-router-dom";
+
+import { InputText } from "primereact/inputtext";
+import { Button } from "primereact/button";
+import { Message } from "primereact/message";
+import { Divider } from "primereact/divider";
+
 import { resetPassword } from "../../../api/auth";
+import { resetPasswordSchema } from "../../../utils/auth-schema";
+import { validateForm } from "../../../utils/constants/validateForm";
 
 function ResetPassword() {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const location = useLocation();
+
+  const appName = location.pathname.split("/")[1] || "public";
+  const basePath = `/${appName}`;
+
+  const [form, setForm] = useState({ email: "" });
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [serverMsg, setServerMsg] = useState("");
+
+  const handleChange = (e) => {
+    const updated = { email: e.target.value };
+    setForm(updated);
+    setErrors(validateForm(resetPasswordSchema, updated));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitted(true);
+    setServerMsg("");
 
-    if (!email) {
-      setMessage("Email is required.");
+    const validationErrors = validateForm(resetPasswordSchema, form);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) return;
+
+    const result = await resetPassword(form.email);
+
+    if (!result.success) {
+      setServerMsg(
+        result.message === "error-alert"
+          ? "Server error. Please try again later."
+          : result.message
+      );
       return;
     }
 
-    const result = await resetPassword(email);
-    
-      if (!result.success) {
-        if (result.message === "error-alert") {
-          alert("Server Error!")
-          return;
-        } 
-       
-        setErrorMsg(result.message);
-        return;
-      }
-    
-
-    setMessage("Email sent. Check your email to reset your password.");
+    setServerMsg("Email sent. Please check your inbox.");
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-      {/* Background Image */}
-      <img
-        src={imgBackground}
-        alt="background"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+    <div className="py-32 bg-slate-50 flex justify-center px-4">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 space-y-4">
+        <h2 className="text-2xl font-bold text-center">Reset Password</h2>
 
-      {/* Reset Password Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">
-          Reset Password
-        </h1>
-
-        {message && (
-          <p className="text-blue-600 text-center mb-3">{message}</p>
+        {serverMsg && (
+          <Message severity="info" text={serverMsg} className="w-full" />
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border px-3 py-2 border-gray-300 rounded-lg focus:ring focus:ring-blue-300 outline-none"
-              placeholder="Your email..."
-              required
+        <form onSubmit={handleSubmit} className="space-y-3 p-fluid">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Email</label>
+            <InputText
+              value={form.email}
+              onChange={handleChange}
+              placeholder="youremail@mail.com"
+              invalid={submitted && !!errors.email}
             />
+            {submitted && errors.email && (
+              <small className="p-error">{errors.email}</small>
+            )}
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Send Reset Link
-          </button>
+            label="Send Reset Link"
+            icon="pi pi-envelope"
+            className="w-full"
+          />
         </form>
 
-        <p className="text-center mt-4 text-sm">
+        <Divider />
+
+        <p className="text-center text-sm">
           Back to{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link
+            to={`${basePath}/login`}
+            className="text-blue-600 font-semibold"
+          >
             Login
           </Link>
         </p>

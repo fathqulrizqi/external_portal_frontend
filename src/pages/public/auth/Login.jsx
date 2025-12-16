@@ -1,16 +1,22 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { login } from "../../../api/auth";
-import imgBackground from "../../../assets/images/cover-register.png";
-import Swal from "sweetalert2";
-import { setRole } from "../../../utils/cookies";
 import { navigateByRole } from "../../../utils/navigateByRole";
+
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Message } from "primereact/message";
+import { Divider } from "primereact/divider";
+
+import { loginSchema } from "../../../utils/auth-schema";
+import { validateForm } from "../../../utils/constants/validateForm";
+
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const segment = location.pathname.split("/")[1]; 
-  const appName = segment || "public";
+  const appName = location.pathname.split("/")[1] || "public";
   const basePath = `/${appName}`;
 
   const [form, setForm] = useState({
@@ -19,99 +25,125 @@ function Login() {
     application: appName,
   });
 
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    const updatedForm = { ...form, [name]: value };
+    setForm(updatedForm);
+
+    const validationErrors = validateForm(loginSchema, updatedForm);
+    setErrors(validationErrors);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    setErrorMsg("");
+    const { email, password } = form;
+    const validationErrors = validateForm(loginSchema, { email, password });
 
-  const result = await login(form);
+    setErrors(validationErrors);
 
-  if (!result.success) {
-    if (result.message === "redirect-login") {
-      alert("Invalid Email or Password!")
-      navigate(`${basePath}/login`, { replace: true });
-      return;
-    } 
-    if (result.message === "redirect-register") {
-      alert("Invalid email. Check your email. If you don't have account, please register!")
+    if (Object.keys(validationErrors).length > 0) return;
+
+    const result = await login(form);
+
+    if (!result.success) {
+      setErrorMsg("Invalid email or password");
       return;
     }
-    setErrorMsg(result.message);
-    return;
-  }
-  const role = JSON.parse(localStorage.getItem("role")); 
-  navigateByRole(role, navigate, appName);
-  // Force reload to ensure token is available for all requests
-  // window.location.reload();
-};
+
+    const role = JSON.parse(localStorage.getItem("role"));
+    navigateByRole(role, navigate, appName);
+  };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-      {/* Background Image */}
-      <img
-        src={imgBackground}
-        alt="background"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+  <div className="py-32 bg-slate-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        {/* Title */}
+        <div className="text-center md:text-left px-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800">
+            Login
+          </h2>
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
+          <p className="text-slate-600 mt-2">Login into Distributor PO Portal</p>
+        </div>
 
         {errorMsg && (
-          <p className="text-red-600 text-center mb-3">{errorMsg}</p>
+          <Message severity="error" text={errorMsg} className="mb-4" />
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block font-medium mb-1">Email</label>
-            <input
-              type="email"
+        <form onSubmit={handleSubmit} className="space-y-4 p-fluid">
+          {/* Email */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">Email</label>
+            <InputText
               name="email"
               value={form.email}
               onChange={handleChange}
-              className="w-full border px-3 py-2 border-gray-300 rounded-lg focus:ring focus:ring-blue-300 outline-none"
-              placeholder="Your Email ..."
-              required
+              placeholder="youremail@mail.com"
+              className="w-full"
+              invalid={submitted && !!errors.email}
             />
+            {submitted && errors.email && (
+              <small className="p-error">{errors.email}</small>
+            )}
           </div>
 
-          <div>
-            <label className="block font-medium mb-1">Password</label>
-            <input
-              type="password"
+          {/* Password */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Password
+            </label>
+            <Password
               name="password"
               value={form.password}
               onChange={handleChange}
-              className="w-full border px-3 py-2 border-gray-300 rounded-lg focus:ring focus:ring-blue-300 outline-none"
-              placeholder="Your Password ..."
-              required
+              toggleMask
+              feedback={false}
+              placeholder="Enter your password"
+              className="w-full"
+              inputClassName="w-full"
+              invalid={submitted && !!errors.password}
             />
+            {submitted && errors.password && (
+              <small className="p-error">{errors.password}</small>
+            )}
           </div>
-          <Link to="/reset-password" className="text-blue-600 mb-2 hover:underline">
-          Forgot Password? 
-          </Link>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Login
-          </button>
-        </form>
 
-        <p className="text-center mt-4 text-sm">
-          Don't have any account?{" "}
-          <Link to={`${basePath}/register`} className="text-blue-600 hover:underline">
-            Register
+          <div className="flex justify-start">
+            <Link
+              to={`${basePath}/reset-password`}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
+          <Button
+            type="submit"
+            label="Sign In"
+            icon="pi pi-sign-in"
+            className="w-full"
+          />
+          <Divider />
+
+        <p className="text-center text-sm">
+          Don't have an account?{" "}
+          <Link
+            to={`${basePath}/register`}
+            className="text-blue-600 font-semibold"
+          >
+            Create Account
           </Link>
         </p>
+        </form>
+
+       
       </div>
     </div>
   );
