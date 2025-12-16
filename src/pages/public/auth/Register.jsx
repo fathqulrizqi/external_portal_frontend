@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { register } from "../../../api/auth";
-import { login } from "../../../api/auth";
+import { register, login } from "../../../api/auth";
 import { navigateByRole } from "../../../utils/navigateByRole";
 import { Input, Button, Field, Label, Fieldset } from "@headlessui/react";
 import { Divider } from 'primereact/divider';
 import { Password } from 'primereact/password';
 
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Divider } from "primereact/divider";
+
+import { registerSchema } from "../../../utils/auth-schema";
+import { validateForm } from "../../../utils/constants/validateForm";
+
 function Register() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
 
-  const segment = location.pathname.split("/")[1];
-  const appName = segment || "public";
+  const appName = location.pathname.split("/")[1] || "public";
   const basePath = `/${appName}`;
 
   const [form, setForm] = useState({
@@ -25,39 +33,39 @@ function Register() {
   });
 
   const [errorMsg, setErrorMsg] = useState("");
-  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    const updatedForm = { ...form, [name]: value };
+    setForm(updatedForm);
+
+    const validationErrors = validateForm(registerSchema, updatedForm);
+
+    setErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: validationErrors[name],
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
-    setErrors({});
+    setSubmitted(true);
 
-    if (form.password !== form.passwordConfirm) {
-      setErrors({ passwordConfirm: "Password does not match" });
-      return;
-    }
+    const validationErrors = validateForm(registerSchema, form);
+    setErrors(validationErrors);
 
-    const result = await register(form);
+    const reg = await register(form);
 
-    if (!result.success) {
-      if (result.message === "redirect-login") {
-        alert("Already registered!");
+    if (!reg.success) {
+      if (reg.message === "redirect-login") {
         navigate(`${basePath}/login`, { replace: true });
         return;
       }
-
-      setErrorMsg(result.message);
+      setErrorMsg(reg.message);
       return;
     }
 
-    // === SAVE TEMP REGISTER DATA FOR OTP PAGE ===
     sessionStorage.setItem(
       "tempRegister",
       JSON.stringify({
@@ -67,7 +75,6 @@ function Register() {
       })
     );
 
-    // === TRY AUTO LOGIN (backend will force OTP if not active) ===
     const loginRes = await login({
       email: form.email,
       password: form.password,
@@ -75,28 +82,13 @@ function Register() {
     });
 
     if (!loginRes.success) {
-      if (loginRes.message === "redirect-register-otp") {
-        alert("Account is not active!");
-        navigate(`${basePath}/register-otp`, { replace: true });
-        return;
-      }
-
-      if (loginRes.message === "redirect-login") {
-        alert("Invalid credentials!");
-        navigate(`${basePath}/login`, { replace: true });
-        return;
-      }
-
-      setErrorMsg(loginRes.message);
+      navigate(`${basePath}/register-otp`, { replace: true });
       return;
     }
 
-    // === LOGIN SUCCESS ===
     const role = JSON.parse(localStorage.getItem("role"));
-
     navigateByRole(role, navigate, appName);
   };
-
 
   const passwordRules = {
     lowercase: /[a-z]/,
@@ -112,236 +104,196 @@ function Register() {
     length: passwordRules.length.test(form.password),
   };
 
-  const isPasswordMatch =
-  form.passwordConfirm.length > 0 &&
-  form.password !== form.passwordConfirm;
+  const isPasswordValid = Object.values(passwordStatus).every(Boolean);
+
+  const isPasswordMismatch =
+    form.passwordConfirm.length > 0 && form.password !== form.passwordConfirm;
 
   return (
-    <div className="relative min-h-[calc(100vh-64px)] py-16 flex items-center justify-center px-4">
-      {/* Background that blends with navbar */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,_rgba(11,30,58,0.06)_0%,_rgba(11,30,58,0.02)_180px,_transparent_181px)]" />
-        <div className="absolute inset-0 bg-slate-50" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-lg">
-        {/* Page heading */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-slate-900">
+    <div className="py-16 bg-slate-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        {/* Title */}
+        <div className="text-center md:text-left px-2">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800">
             Create Account
-          </h1>
-          <p className="text-slate-600 mt-1">Join the Distributor PO Portal</p>
+          </h2>
+
+          <p className="text-slate-600 mt-2">Join the Distributor PO Portal</p>
         </div>
-
-        {/* Card */}
-        <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200">
-          {/* General Error Message */}
-          {errorMsg && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm text-center">{errorMsg}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <Fieldset className="space-y-5">
-              {/* Full Name */}
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Full Name
-                </Label>
-                <Input
-                  type="text"
-                  name="fullName"
-                  value={form.fullName}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 transition duration-200 text-slate-900 placeholder:text-slate-400 ${
-                    errors.fullName
-                      ? "border-red-500 focus:ring-red-500 bg-red-50"
-                      : "border-slate-300 focus:ring-blue-600 focus:border-transparent"
-                  }`}
-                  placeholder="John Doe"
-                  required
-                />
-                {errors.fullName && (
-                  <p className="text-red-600 text-sm mt-1">{errors.fullName}</p>
-                )}
-              </Field>
-
-              {/* Email */}
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Email Address
-                </Label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 transition duration-200 text-slate-900 placeholder:text-slate-400 ${
-                    errors.email
-                      ? "border-red-500 focus:ring-red-500 bg-red-50"
-                      : "border-slate-300 focus:ring-blue-600 focus:border-transparent"
-                  }`}
-                  placeholder="you@company.com"
-                  required
-                />
-                {errors.email && (
-                  <p className="text-red-600 text-sm mt-1">{errors.email}</p>
-                )}
-              </Field>
-
-              {/* Phone */}
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Phone Number
-                </Label>
-                <Input
-                  type="tel"
-                  name="phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 bg-white border rounded-lg focus:outline-none focus:ring-2 transition duration-200 text-slate-900 placeholder:text-slate-400 ${
-                    errors.phone
-                      ? "border-red-500 focus:ring-red-500 bg-red-50"
-                      : "border-slate-300 focus:ring-blue-600 focus:border-transparent"
-                  }`}
-                  placeholder="+62 812 3456 7890"
-                  required
-                />
-                {errors.phone && (
-                  <p className="text-red-600 text-sm mt-1">{errors.phone}</p>
-                )}
-              </Field>
-
-              {/* Password */}
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Password
-                </Label>
-
-                <Password
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  toggleMask
-                  feedback
-                  header={<div className="font-bold mb-3">Pick a password</div>}
-                  footer={
-                    <>
-                      <Divider />
-                      <p className="mt-2 text-sm">Suggestions</p>
-                      <ul className="mt-3 space-y-1 text-sm">
-                        <li className="flex items-center gap-2">
-                          <i
-                            className={`pi ${
-                              passwordStatus.lowercase ? "pi-check-circle text-green-600" : "pi-times-circle text-slate-400"
-                            }`}
-                          />
-                          At least one lowercase
-                        </li>
-
-                        <li className="flex items-center gap-2">
-                          <i
-                            className={`pi ${
-                              passwordStatus.uppercase ? "pi-check-circle text-green-600" : "pi-times-circle text-slate-400"
-                            }`}
-                          />
-                          At least one uppercase
-                        </li>
-
-                        <li className="flex items-center gap-2">
-                          <i
-                            className={`pi ${
-                              passwordStatus.number ? "pi-check-circle text-green-600" : "pi-times-circle text-slate-400"
-                            }`}
-                          />
-                          At least one numeric
-                        </li>
-
-                        <li className="flex items-center gap-2">
-                          <i
-                            className={`pi ${
-                              passwordStatus.length ? "pi-check-circle text-green-600" : "pi-times-circle text-slate-400"
-                            }`}
-                          />
-                          Minimum 8 characters
-                        </li>
-                      </ul>
-
-                    </>
-                  }
-                  className="w-full"
-                  inputClassName={`w-full px-4 py-3 rounded-lg border ${
-                    errors.password
-                      ? "border-red-500 bg-red-50"
-                      : "border-slate-300"
-                  }`}
-                />
-
-                {errors.password && (
-                  <p className="text-red-600 text-sm mt-1">{errors.password}</p>
-                )}
-              </Field>
-
-
-              {/* Confirm Password */}
-              <Field>
-                <Label className="block text-sm font-medium text-slate-800 mb-2">
-                  Confirm Password
-                </Label>
-
-                <Password
-                  value={form.passwordConfirm}
-                  onChange={(e) =>
-                    setForm({ ...form, passwordConfirm: e.target.value })
-                  }
-                  toggleMask
-                  feedback={false}
-                  className="w-full"
-                  inputClassName={`w-full px-4 py-3 rounded-lg border ${
-                    errors.passwordConfirm
-                      ? "border-red-500 bg-red-50"
-                      : "border-slate-300"
-                  }`}
-                />
-                {isPasswordMatch && (
-                  <p className="text-red-600 text-sm mt-1">
-                    Password does not match
-                  </p>
-                )}
-
-                {errors.passwordConfirm && (
-                  <p className="text-red-600 text-sm mt-1">
-                    {errors.passwordConfirm}
-                  </p>
-                )}
-              </Field>
-
-
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-sm hover:shadow-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-              >
-                Create Account
-              </Button>
-            </Fieldset>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-center text-sm text-slate-600">
-              Already have an account?{" "}
-              <Link
-                to={`${basePath}/login`}
-                className="font-semibold text-blue-700 hover:text-blue-800 hover:underline transition"
-              >
-                Sign In
-              </Link>
-            </p>
+        <form onSubmit={handleSubmit} className="space-y-4 p-fluid">
+          {/* Full Name */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Full Name
+            </label>
+            <InputText
+              name="fullName" // Pastikan ada name untuk handleChange
+              value={form.fullName}
+              placeholder="Enter your full name"
+              onChange={handleChange}
+              invalid={submitted && !!errors.fullName} // Gunakan prop invalid
+              className="w-full"
+            />
+            {submitted && errors.fullName && (
+              <small className="p-error text-red-600">{errors.fullName}</small>
+            )}
           </div>
         </div>
 
+          {/* Email */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">Email</label>
+            <InputText
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="youremail@mail.com"
+              invalid={submitted && !!errors.email}
+              className="w-full"
+            />
+            {submitted && errors.email && (
+              <small className="p-error text-red-600">{errors.email}</small>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">Phone</label>
+            <InputText
+              value={form.phone}
+              placeholder="0812345678"
+              name="phone"
+              invalid={submitted && !!errors.phone}
+              onChange={handleChange}
+              className={`w-full ${submitted && errors.phone ? "invalid" : ""}`}
+            />
+            {submitted && errors.phone && (
+              <small className="p-error text-red-600">{errors.phone}</small>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Password
+            </label>
+            <Password
+              name="password"
+              inputId="password"
+              value={form.password}
+              placeholder="Enter your Password"
+              onChange={handleChange}
+              toggleMask
+              feedback
+              promptLabel="Enter a password"
+              weakLabel="Weak"
+              mediumLabel="Medium"
+              strongLabel="Strong"
+              style={{ width: "100%" }}
+              invalid={submitted && !!errors.password}
+              className="w-full"
+              inputClassName={`w-full ${
+                form.password && !isPasswordValid ? "p-invalid" : ""
+              }`}
+              header={
+                <div className="font-semibold mb-2">Password strength</div>
+              }
+              footer={
+                <>
+                  <p className="text-sm font-medium mb-2">
+                    Password must contain:
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.lowercase
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      One lowercase letter
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.uppercase
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      One uppercase letter
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.number
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      One number
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <i
+                        className={`pi ${
+                          passwordStatus.length
+                            ? "pi-check-circle text-green-600"
+                            : "pi-times-circle text-slate-400"
+                        }`}
+                      />
+                      Minimum 8 characters
+                    </li>
+                  </ul>
+                </>
+              }
+            />
+            {errors.password && (
+              <small className="p-error text-red-600">{errors.password}</small>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-800">
+              Confirm Password
+            </label>
+
+            <Password
+              value={form.passwordConfirm}
+              placeholder="Enter your confirm password"
+              onChange={handleChange}
+              toggleMask
+              feedback={false}
+              name="passwordConfirm"
+              className="w-full"
+              invalid={submitted && !!errors.passwordConfirm}
+              inputClassName={`w-full ${isPasswordMismatch ? "p-invalid" : ""}`}
+            />
+            {errors.passwordConfirm && (
+              <small className="p-error text-red-600">
+                {errors.passwordConfirm}
+              </small>
+            )}
+            {isPasswordMismatch && (
+              <small className="text-red-600">Password does not match</small>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            label="Create Account"
+            icon="pi pi-user-plus"
+            className="w-full"
+          />
+          <Divider />
+          <p className="text-center text-sm mt-2">
+            Already have an account?{" "}
+            <Link
+              to={`${basePath}/login`}
+              className="text-blue-600 font-semibold"
+            >
+              Sign In
+            </Link>
+          </p>
+        </form>
       </div>
     </div>
   );
