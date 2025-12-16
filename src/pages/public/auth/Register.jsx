@@ -2,14 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { register, login } from "../../../api/auth";
 import { navigateByRole } from "../../../utils/navigateByRole";
-import { Input, Button, Field, Label, Fieldset } from "@headlessui/react";
 import { Divider } from 'primereact/divider';
-import { Password } from 'primereact/password';
 
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
-import { Divider } from "primereact/divider";
 
 import { registerSchema } from "../../../utils/auth-schema";
 import { validateForm } from "../../../utils/constants/validateForm";
@@ -138,7 +135,6 @@ function Register() {
               <small className="p-error text-red-600">{errors.fullName}</small>
             )}
           </div>
-        </div>
 
           {/* Email */}
           <div className="space-y-1">
@@ -183,7 +179,6 @@ function Register() {
               onChange={handleChange}
               toggleMask
               feedback
-              promptLabel="Enter a password"
               weakLabel="Weak"
               mediumLabel="Medium"
               strongLabel="Strong"
