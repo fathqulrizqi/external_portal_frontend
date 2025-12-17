@@ -24,7 +24,7 @@ export const DistroPoRoutes = [
 
       { path: "login", element: <GuestOnly><Login /></GuestOnly> },
       { path: "login-otp", element: <GuestOnly><LoginOtp /></GuestOnly> },
-      { path: "reset-password", element: <GuestOnly><ResetPassword /></GuestOnly> },
+      { path: "reset-password", element: <ResetPassword />},
 
       { path: "register", element: <GuestOnly><Register /></GuestOnly> },
       { path: "register-otp", element: <GuestOnly><RegisterOtp /></GuestOnly> },

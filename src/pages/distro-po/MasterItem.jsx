@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 //import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../utils/constants/master-item';
 import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../api/distro-po/masteritem';
-import { HotTable } from '@handsontable/react-wrapper';
+import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 

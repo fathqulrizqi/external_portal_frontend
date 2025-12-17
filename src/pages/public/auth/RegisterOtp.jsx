@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { API } from "../../../api";   
-import imgBackground from "../../../assets/images/cover-register.png";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom"; 
+import { InputOtp } from "primereact/inputotp"; 
+import { Button } from "primereact/button"; 
+import { Divider } from "primereact/divider"; 
+import { API } from "../../../api";
+// import imgBackground from "../../../assets/images/cover-register.png"; // Tidak digunakan
 import useOtpTimer from "../../../hooks/useOtpTimer";
 import { getToken } from "../../../utils/cookies";
 import { navigateByRole } from "../../../utils/navigateByRole";
@@ -9,186 +12,173 @@ import { login } from "../../../api/auth";
 
 function RegisterOtp() {
   const navigate = useNavigate();
-  const inputRefs = useRef([]);
   const { state } = useLocation();
   const message = state?.msg;
-  const appName = state?.appName;
+  const appName = state?.appName || "public"; 
   const basePath = `/${appName}`;
 
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(""); 
   const { timer, resetTimer, formatTime } = useOtpTimer(120);
   const [errorMsg, setErrorMsg] = useState("");
   const [resending, setResending] = useState(false);
 
-  const handleChange = (value, i) => {
-    if (!/^[0-9]?$/.test(value)) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const updated = [...otp];
-    updated[i] = value;
-    setOtp(updated);
+    if (otp.length !== 6) return setErrorMsg("OTP must be 6 digits.");
 
-    if (value && i < 5) {
-      inputRefs.current[i + 1].focus();
-    }
-  };
+    let verifyRes;
+    try {
+      const token = getToken();
+      const { data } = await API.post(
+        "/users/OTPRegistrationVerification",
+        { otp: otp },
+        { headers: { Authorization: `${token}` } }
+      );
 
-  const handleKeyDown = (e, i) => {
-    if (e.key === "Backspace" && !otp[i] && i > 0) {
-      inputRefs.current[i - 1].focus();
-    }
-  };
+      if (data.status !== "Success") {
+        setErrorMsg(data.message);
+        return;
+      }
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const code = otp.join("");
+      console.log("Register OTP Valid!");
+      verifyRes = true;
 
-  if (code.length !== 6) return setErrorMsg("OTP must be 6 digits.");
-
-  // === VERIFY OTP ===
-  let verifyRes;
-  try {
-    const token = getToken();
-    const { data } = await API.post(
-      "/users/OTPRegistrationVerification",
-      { otp: code },
-      { headers: { Authorization: `${token}` } }
-    );
-
-    if (data.status !== "Success") {
-      setErrorMsg(data.message);
+    } catch (err) {
+      const errorDetail = err.response?.data?.message || "Wrong OTP or connection error.";
+      setErrorMsg(errorDetail);
       return;
     }
 
-    alert("Register OTP Valid!");
-    verifyRes = true;
+    if (!verifyRes) return;
 
-  } catch (err) {
-    setErrorMsg("Wrong OTP");
-    return;
-  }
+    try {
+      const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
 
-  if (!verifyRes) return;
-  
-    navigate(`/${appName}/dashboard`);
+      if (!temp) {
+        alert("Session expired. Please login manually.");
+        navigate(`${basePath}/login`);
+        return;
+      }
 
-  // // === LOGIN OTOMATIS ===
-  // try {
-  //   const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
+      const loginRes = await login({
+        email: temp.email,
+        password: temp.password,
+        application: temp.application,
+      });
 
-  //   if (!temp) {
-  //     alert("Session expired. Please login manually.");
-  //     navigate(`/${appName}/login`);
-  //     return;
-  //   }
+      if (!loginRes.success) {
+        alert("Login failed after OTP. Please login manually.");
+        navigate(`${basePath}/login`);
+        return;
+      }
 
-  //   const loginRes = await login({
-  //     email: temp.email,
-  //     password: temp.password,
-  //     application: temp.application,
-  //   });
+      sessionStorage.removeItem("tempRegister");
 
-  //   if (!loginRes.success) {
-  //     alert("Login failed after OTP. Please login manually.");
-  //     navigate(`/${appName}/login`);
-  //     return;
-  //   }
+      const role = JSON.parse(localStorage.getItem("role"));
 
-  //   // HAPUS TEMP REGISTER
-  //   sessionStorage.removeItem("tempRegister");
+      navigateByRole(role, navigate, appName);
 
-  //   // GET ROLE
-  //   const role = JSON.parse(localStorage.getItem("role"));
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong during automatic login.");
+      navigate(`${basePath}/login`);
+    }
+  };
 
-  //   // PENTING: hapus temp sebelum redirect
-  //   navigateByRole(role, navigate, appName);
+  const handleResend = async () => {
+    if (resending) return; 
+    setResending(true);
+    setErrorMsg("");
 
-  // } catch (error) {
-  //   console.error(error);
-  //   alert("Something went wrong after OTP.");
-  // }
-};
+    try {
+      const token = getToken();
+      await API.post("/users/OTP", null, {
+        headers: { Authorization: `${token}` }
+      });
+      resetTimer();
+      setOtp("");
+    } catch {
+      setErrorMsg("Failed to resend OTP");
+    }
 
-const handleResend = async () => {
-  if (resending) return; // Prevent double trigger
-  setResending(true);
-  setErrorMsg("");
-
-  try {
-    await API.post("/users/OTP");
-    resetTimer();
-    setOtp(["", "", "", "", "", ""]);
-    inputRefs.current[0].focus();
-  } catch {
-    setErrorMsg("Failed to resend OTP");
-  }
-
-  setResending(false);
-};
+    setResending(false);
+  };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4">
-      <img
-        src={imgBackground}
-        alt="background"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
-
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg shadow-xl rounded-xl p-8">
-
-        <h1 className="text-2xl font-bold text-center mb-3">OTP Verification</h1>
-         <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-lg text-center">
-          {message}
-        </div>
-        <p className="text-center text-gray-600 mb-6">
-          Enter the 6-digit OTP sent to your email
+    <div className="py-32 bg-slate-50 flex justify-center px-4">
+      {/* Struktur kartu putih terpusat, disamakan dengan LoginOtp */}
+      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 space-y-4">
+        
+        <h2 className="text-2xl font-bold text-center">OTP Verification</h2>
+        
+        {message && (
+           <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-lg text-center text-sm">
+             {message}
+           </div>
+        )}
+        
+        <p className="text-center text-gray-600">
+          Enter the 6-digit OTP sent to your registered email.
         </p>
 
         {errorMsg && (
-          <p className="text-red-600 text-center mb-3">{errorMsg}</p>
+          <p className="text-red-600 text-center">{errorMsg}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* OTP Inputs */}
-          <div className="flex justify-between">
-            {otp.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => (inputRefs.current[i] = el)}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleChange(e.target.value, i)}
-                onKeyDown={(e) => handleKeyDown(e, i)}
-                className="w-12 h-14 border rounded-lg text-center text-xl font-bold focus:ring focus:ring-blue-300 outline-none"
-              />
-            ))}
+          {/* PrimeReact InputOtp */}
+          <div className="flex justify-center">
+            <InputOtp
+                value={otp}
+                onChange={(e) => setOtp(e.value)}
+                length={6}
+                integerOnly
+                className="otp-input"
+            />
           </div>
-
-          {/* Countdown */}
-          <p className="text-center text-gray-700">
+          
+          {/* Countdown / Resend */}
+          <p className="text-center text-gray-700 text-sm">
             {timer > 0 ? (
-              <>Resend OTP in <span className="font-semibold">{formatTime()}</span></>
+              <>
+                Haven't received the code? Resend in{" "}
+                <b className="text-blue-600">{formatTime()}</b>
+              </>
             ) : (
               <button
                 type="button"
                 onClick={handleResend}
-                className="text-blue-600 font-medium hover:underline"
                 disabled={resending}
+                className={`font-semibold cursor-pointer ${resending ? 'text-slate-400' : 'text-blue-600 hover:underline'}`}
               >
                 {resending ? "Sending..." : "Resend OTP"}
               </button>
             )}
           </p>
 
-          <button
+          <Button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Verify
-          </button>
-
+            label="Verify Account"
+            icon="pi pi-check-circle"
+            className="w-full"
+            disabled={otp.length !== 6}
+          />
         </form>
+
+        <Divider />
+
+        <p className="text-center text-sm">
+          Return to{" "}
+          <Link
+            to={`${basePath}/login`}
+            className="text-blue-600 font-semibold"
+          >
+            Login
+          </Link>
+        </p>
+
       </div>
     </div>
   );

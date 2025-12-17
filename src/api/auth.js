@@ -38,9 +38,9 @@ export const login = async ({ email, password, application }) => {
   }
 };
 
-export const resetPassword = async ( email ) => {
+export const resetPassword = async ( email, application ) => {
   try {
-    const response = await API.post("/forgotPasswordSendingEmail", { email });
+    const response = await API.post("/forgotPasswordSendingEmail", { email, application });
 
     return { success: true, message: response.data.message };
   } catch (err) {
