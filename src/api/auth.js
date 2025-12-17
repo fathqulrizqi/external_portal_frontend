@@ -126,7 +126,7 @@ export const OTPRegistrationVerification = async ({ otp }) => {
       { otp },
       {
         headers: {
-          Authorization: `${token}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     );
