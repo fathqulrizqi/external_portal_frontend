@@ -33,6 +33,9 @@ export const registerSchema = Joi.object({
     "string.empty": "Confirm Password is required",
     "any.only": "Password does not match",
   }),
+  application: Joi.string().required().messages({
+    "string.empty": "Application is required",
+  }),
 });
 
 export const loginSchema = Joi.object({

@@ -74,13 +74,12 @@ function Register() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitted(true);
+    e.preventDefault();    
 
     const validationErrors = validateForm(registerSchema, form);
-    setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
@@ -90,7 +89,11 @@ function Register() {
         navigate(`${basePath}/login`, { replace: true });
         return;
       }
-      setErrorMsg(reg.message);
+      if (reg.message === "Email already registered") {
+        setErrorMsg("Email already registered. Please use a different email or sign in.");
+      } else {
+        setErrorMsg(reg.message);
+      }
       return;
     }
 
@@ -99,14 +102,14 @@ function Register() {
       JSON.stringify({
         email: form.email,
         password: form.password,
-        application: form.application,
+        application: appName,
       })
     );
 
     const loginRes = await login({
       email: form.email,
       password: form.password,
-      application: form.application,
+      application: appName,
     });
 
     if (!loginRes.success) {
@@ -116,6 +119,7 @@ function Register() {
 
     const role = JSON.parse(localStorage.getItem("role"));
     navigateByRole(role, navigate, appName);
+    setSubmitted(true);
   };
 
   const passwordRules = {
@@ -136,7 +140,14 @@ function Register() {
     form.passwordConfirm.length > 0 && form.password !== form.passwordConfirm;
 
   return (
-    <div className="py-16 bg-slate-50 flex items-center justify-center px-4">
+    <div className="py-16 bg-slate-50 flex flex-col items-center justify-center px-4">
+      {errorMsg && (
+        <div className="mb-4 w-full max-w-5xl mx-auto display-block justify-center">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center" role="alert">
+            <span className="block sm:inline">{errorMsg}</span>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         {/* Title */}
         <div className="text-center md:text-left px-2">
@@ -290,9 +301,6 @@ function Register() {
               <small className="p-error text-red-600">
                 {errors.passwordConfirm}
               </small>
-            )}
-            {isPasswordMismatch && (
-              <small className="text-red-600">Password does not match</small>
             )}
           </div>
 

@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { removeToken } from "../utils/cookies";
 
 export default function DashboardLayout() {
+  debugger;
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

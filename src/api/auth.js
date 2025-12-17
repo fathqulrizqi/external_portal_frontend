@@ -107,9 +107,9 @@ export const register = async ({ fullName, email, password, passwordConfirm, pho
       err.response?.data?.errors ||
       "Registration failed";
 
-    if (err.response?.status === 500 && msg === "Email already registered") {
-      return { success: false, message: "redirect-login" };
-    }
+    // if (err.response?.status === 500 && msg === "Email already registered") {
+    //   return { success: false, message: "redirect-login" };
+    // }
 
     return { success: false, message: msg };
   }

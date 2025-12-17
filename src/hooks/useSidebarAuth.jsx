@@ -3,6 +3,7 @@ import { API } from "../api";
 import { getToken } from "../utils/cookies";
 
 export default function useSidebarAuth() {
+  console.log(getToken());
   const [sidebar, setSidebar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorCode, setErrorCode] = useState(null);
@@ -11,7 +12,7 @@ export default function useSidebarAuth() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      setErrorCode(401);
+      ErrorCode(401);
       setLoading(false);
       return;
     }

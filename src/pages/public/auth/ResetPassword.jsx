@@ -37,7 +37,7 @@ function ResetPassword() {
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    const result = await resetPassword(form.email, appName);
+    const result = await resetPassword(form.email);
 
     if (!result.success) {
       setServerMsg(
