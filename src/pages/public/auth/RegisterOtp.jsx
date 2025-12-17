@@ -68,42 +68,44 @@ const handleSubmit = async (e) => {
   }
 
   if (!verifyRes) return;
+  
+    navigate(`/${appName}/dashboard`);
 
-  // === LOGIN OTOMATIS ===
-  try {
-    const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
+  // // === LOGIN OTOMATIS ===
+  // try {
+  //   const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
 
-    if (!temp) {
-      alert("Session expired. Please login manually.");
-      navigate(`/${appName}/login`);
-      return;
-    }
+  //   if (!temp) {
+  //     alert("Session expired. Please login manually.");
+  //     navigate(`/${appName}/login`);
+  //     return;
+  //   }
 
-    const loginRes = await login({
-      email: temp.email,
-      password: temp.password,
-      application: temp.application,
-    });
+  //   const loginRes = await login({
+  //     email: temp.email,
+  //     password: temp.password,
+  //     application: temp.application,
+  //   });
 
-    if (!loginRes.success) {
-      alert("Login failed after OTP. Please login manually.");
-      navigate(`/${appName}/login`);
-      return;
-    }
+  //   if (!loginRes.success) {
+  //     alert("Login failed after OTP. Please login manually.");
+  //     navigate(`/${appName}/login`);
+  //     return;
+  //   }
 
-    // HAPUS TEMP REGISTER
-    sessionStorage.removeItem("tempRegister");
+  //   // HAPUS TEMP REGISTER
+  //   sessionStorage.removeItem("tempRegister");
 
-    // GET ROLE
-    const role = JSON.parse(localStorage.getItem("role"));
+  //   // GET ROLE
+  //   const role = JSON.parse(localStorage.getItem("role"));
 
-    // PENTING: hapus temp sebelum redirect
-    navigateByRole(role, navigate, appName);
+  //   // PENTING: hapus temp sebelum redirect
+  //   navigateByRole(role, navigate, appName);
 
-  } catch (error) {
-    console.error(error);
-    alert("Something went wrong after OTP.");
-  }
+  // } catch (error) {
+  //   console.error(error);
+  //   alert("Something went wrong after OTP.");
+  // }
 };
 
 const handleResend = async () => {

@@ -15,7 +15,6 @@ import { validateForm } from "../../../utils/constants/validateForm";
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-
   const appName = location.pathname.split("/")[1] || "public";
   const basePath = `/${appName}`;
 
