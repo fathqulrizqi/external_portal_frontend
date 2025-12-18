@@ -194,8 +194,13 @@ const POList = () => {
         </button>
       </div>
 
-      {loading ? <p>Loading...</p> : null}
-      {error ? <p className="text-red-500">{error}</p> : null}
+        {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600">Loading PO data...</span>
+        </div>
+      )}
+
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <style>{`

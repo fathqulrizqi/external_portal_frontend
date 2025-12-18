@@ -9,7 +9,7 @@ import {
   faBoxesStacked,
   faTrophy,
   faList,
-  faChartSimple
+  faChartSimple,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardLayout() {
@@ -64,37 +64,44 @@ export default function DashboardLayout() {
   `;
 
   // DUMMY
-const menus = [
-  {
-    to: "/distro-po/dashboard",
-    label: "Dashboard",
-    exact: true,
-    icon: faHouse,
-  },
-  {
-    to: "/distro-po/dashboard/masteritem",
-    label: "Master Item",
-    icon: faBoxesStacked,
-  },
-  {
-    to: "/distro-po/dashboard/masterachivement",
-    label: "Master Achievement",
-    icon: faTrophy,
-  },
-  {
-    to: "/distro-po/dashboard/list",
-    label: "Distro PO List",
-    icon: faList,
-  },
-  {
-    to: "/distro-po/dashboard/summary",
-    label: "Summary",
-    icon: faChartSimple,
-  },
-];
+  const menus = [
+    {
+      to: "/distro-po/dashboard",
+      label: "Dashboard",
+      exact: true,
+      icon: faHouse,
+    },
+    {
+      to: "/distro-po/dashboard/masteritem",
+      label: "Master Item",
+      icon: faBoxesStacked,
+    },
+    {
+      to: "/distro-po/dashboard/masterachivement",
+      label: "Master Achievement",
+      icon: faTrophy,
+    },
+    {
+      to: "/distro-po/dashboard/list",
+      label: "Distro PO List",
+      icon: faList,
+    },
+    {
+      to: "/distro-po/dashboard/summary",
+      label: "Summary",
+      icon: faChartSimple,
+    },
+  ];
+
+  const profile = {
+    name: "Ariana Grande",
+    email: "ariana.grande@mail.com",
+  };
+
+  const userInitial = profile.name?.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 flex">
+    <div className="h-screen w-full bg-gray-100 flex overflow-hidden">
       {/* SIDEBAR */}
       <aside
         className={`
@@ -119,16 +126,21 @@ const menus = [
 
         <nav className="space-y-2">
           {menus.map((menu) => (
-            <NavLink key={menu.to} to={menu.to} end={menu.exact} className={navClass}>
+            <NavLink
+              key={menu.to}
+              to={menu.to}
+              end={menu.exact}
+              className={navClass}
+            >
               {({ isActive }) => (
                 <>
-                 <FontAwesomeIcon
-          icon={menu.icon}
-          className={`mr-3 ${
-            isActive ? "text-yellow-600" : "text-gray-400"
-          }`}
-        />
-        {menu.label}
+                  <FontAwesomeIcon
+                    icon={menu.icon}
+                    className={`mr-3 ${
+                      isActive ? "text-yellow-600" : "text-gray-400"
+                    }`}
+                  />
+                  {menu.label}
                 </>
               )}
             </NavLink>
@@ -138,7 +150,7 @@ const menus = [
 
       {/* MAIN CONTENT */}
       <main
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+        className={`flex-1 flex flex-col h-full overflow-hidden ${
           sidebarOpen ? "md:ml-0" : "w-full"
         }`}
       >
@@ -236,7 +248,9 @@ const menus = [
                   className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">U</span>
+                    <span className="text-white font-semibold text-sm">
+                      {userInitial}
+                    </span>
                   </div>
                   <svg
                     className="w-4 h-4 text-gray-400"
@@ -258,12 +272,12 @@ const menus = [
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-200">
                       <p className="text-sm font-medium text-gray-900">
-                        User Name
+                        {profile.name}
                       </p>
-                      <p className="text-xs text-gray-500">user@example.com</p>
+                      <p className="text-xs text-gray-500">{profile.email}</p>
                     </div>
                     <Link
-                      to=""
+                      to="profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                     >
                       Profile
@@ -288,8 +302,8 @@ const menus = [
         </header>
 
         {/* Page content */}
-        <div className="flex-1 p-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm">
+        <div className="flex-1 p-6 overflow-hidden">
+          <div className="bg-white p-6 rounded-2xl shadow-sm h-full overflow-y-auto">
             <Outlet />
           </div>
         </div>
