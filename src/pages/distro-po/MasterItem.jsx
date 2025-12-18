@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 //import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../utils/constants/master-item';
 import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../api/distro-po/masteritem';
-import { HotTable } from '@handsontable/react';
+import { HotTable } from '@handsontable/react-wrapper';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 
@@ -69,42 +69,7 @@ export default function MasterItemPage() {
     }
   };
 
-  const handleAddRow = async () => {
-    const hot = hotTableComponent.current.hotInstance;
-    const newRow = {};
-    columns.forEach(col => {
-      if (col.type === 'checkbox') {
-        newRow[col.data] = false;
-      } else if (col.type === 'numeric') {
-        newRow[col.data] = 0;
-      } else {
-        newRow[col.data] = '';
-      }
-    });
-    try {
-      await createMasterItem(newRow);
-      showNotification('Row added successfully', 'success');
-      await fetchItems();
-      setTimeout(() => {
-        hot.scrollViewportTo(data.length, 0);
-      }, 300);
-    } catch {
-      showNotification('Failed to add row', 'error');
-    }
-  };
-
-  const handleDeleteRow = async (rowIndex) => {
-    const row = data[rowIndex];
-    if (!row || !row.id) return;
-    try {
-      await deleteMasterItem(row.id);
-      showNotification('Row deleted successfully', 'success');
-      await fetchItems();
-    } catch {
-      showNotification('Failed to delete row', 'error');
-    }
-  };
-
+  
 const handleSaveAll = async () => {
     setSaving(true);
     let success = true;
@@ -186,12 +151,19 @@ const handleSaveAll = async () => {
   };
   const handleExportData = () => {
     const hot = hotTableComponent.current.hotInstance;
-    const exportPlugin = hot.getPlugin('exportFile');
-    exportPlugin.exportToFile('csv', {
-      filename: 'master-items',
-      mimeType: 'text/csv',
-      fileExtension: 'csv'
-    });
+    // For @handsontable/react-wrapper, plugin name is 'ExportFile' (capital E)
+    const exportPlugin = hot.getPlugin('ExportFile');
+    if (exportPlugin && typeof exportPlugin.exportAsString === 'function') {
+      exportPlugin.downloadFile('csv', {
+        filename: 'master-items',
+        mimeType: 'text/csv',
+        fileExtension: 'csv',
+        columnHeaders: true,
+        rowHeaders: false
+      });
+    } else {
+      showNotification('Export plugin not available', 'error');
+    }
   };
 
   return (
@@ -211,15 +183,6 @@ const handleSaveAll = async () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Export
-          </button>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2"
-            onClick={handleAddRow}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Row
           </button>
           <button
             className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 flex items-center gap-2"

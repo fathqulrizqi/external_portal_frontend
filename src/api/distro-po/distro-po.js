@@ -1,3 +1,15 @@
+// Fetch PO Summary (by year and optional month)
+export const getPOSummary = async ({ year, month }) => {
+  try {
+    let url = `/distro-po/summary?year=${year}`;
+    if (month !== undefined && month !== null) url += `&month=${month}`;
+    const response = await API.get(url);
+    // Always return array of summary objects with vehicle category fields
+    return Array.isArray(response.data) ? response.data : (response.data?.data || []);
+  } catch (err) {
+    return [];
+  }
+};
 // Update Distributor PO by ID
 export const updateDistributorPO = async (id, headerInfo, items) => {
   try {
@@ -12,8 +24,11 @@ export const updateDistributorPO = async (id, headerInfo, items) => {
         poDate,
         niterraSO: headerInfo.niterraSO,
       },
-      items: items.map(({ id, category, type, ...rest }) => ({
-        vehicleCategory: category,
+      items: items.map(({ id, category, vehicle, vehicleId, price, type, ...rest }) => ({
+        category,
+        vehicleId,
+        vehicle,
+        price,
         spType: type,
         ...rest
       })),
@@ -69,8 +84,11 @@ export const saveDistributorPO = async (headerInfo, items) => {
         poDate,
         niterraSO: headerInfo.niterraSO,
       },
-      items: items.map(({ id, category, type, ...rest }) => ({
-        vehicleCategory: category,
+      items: items.map(({ id, category, vehicle, vehicleId, price, type, ...rest }) => ({
+        category,
+        vehicleId,
+        vehicle,
+        price,
         spType: type,
         ...rest
       })), // Map fields for backend

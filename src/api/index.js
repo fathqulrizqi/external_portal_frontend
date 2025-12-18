@@ -18,7 +18,7 @@ API.interceptors.request.use((config) => {
   console.log("TOKEN SENT:", token);
 
   if (uuid) config.headers["Client-Device-Uuid"] = uuid;
-  if (token) config.headers.Authorization = `${token}`;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   console.log("Sending request with headers:", config.headers);
   return config;
 });

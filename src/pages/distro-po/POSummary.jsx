@@ -3,7 +3,8 @@ import { HotTable } from '@handsontable/react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 
-import { getPOSummary } from '../../utils/constants/summary';
+//import { getPOSummary } from '../../utils/constants/summary';
+import { getPOSummary } from '../../api/distro-po/distro-po';
 
 
 function numberCommaRenderer(instance, td, row, col, prop, value, cellProperties) {
@@ -13,15 +14,15 @@ function numberCommaRenderer(instance, td, row, col, prop, value, cellProperties
     } else {
         td.textContent = '';
     }
-    td.className += ' htRight'; 
+    td.className += ' htRight';
 }
 
 // Custom renderer untuk format Bulan
 function monthShortRenderer(instance, td, row, col, prop, value, cellProperties) {
     Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, prop, value, cellProperties]);
-    
+
     const monthNum = typeof value === 'string' ? parseInt(value, 10) : Number(value);
-    
+
     if (!value || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
         td.textContent = 'All';
     } else {
@@ -33,68 +34,36 @@ function monthShortRenderer(instance, td, row, col, prop, value, cellProperties)
 const POSummary = () => {
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState('');
-    const [rawRows, setRawRows] = useState([]);
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(false);
-    
-    const hotTableComponent = useRef(null); 
+
+    const hotTableComponent = useRef(null);
 
     useEffect(() => {
         setLoading(true);
         const monthToSend = month === '' ? undefined : Number(month);
-        getPOSummary({ year: Number(year), month: monthToSend }).then(data => {
-            setRawRows(data);
-            setLoading(false);
-        }).catch(err => {
-             console.error("Failed to fetch PO Summary:", err);
-             setLoading(false);
-        });
-    }, [year, month]);
-
-    useEffect(() => {
-        const vehicleIDs = ["2W Ni", "2W PM", "4W Ni", "4W PM"];
-        const vehicleIDsNorm = vehicleIDs.map(v => v.trim().toLowerCase());
-        const summaryMap = {};
-        rawRows.forEach(row => {
-            let month = row.month;
-            let year = row.year;
-            if ((!month || !year) && row.PODate) {
-                const date = new Date(row.PODate);
-                if (!isNaN(date.getTime())) {
-                    month = date.getMonth() + 1;
-                    year = date.getFullYear();
+        getPOSummary({ year: Number(year), month: monthToSend })
+            .then(result => {
+                if (Array.isArray(result)) {
+                    setRows(result);
+                } else if (result && Array.isArray(result.data)) {
+                    setRows(result.data);
+                } else {
+                    setRows([]);
                 }
-            }
-            const vehicleIDRaw = (row.vehicleID || '').trim();
-            const vehicleIDNorm = vehicleIDRaw.toLowerCase();
-            const key = `${row.distributorName}-${month || ''}-${year}`;
-            
-            if (!summaryMap[key]) {
-                summaryMap[key] = {
-                    id: key,
-                    distributorName: row.distributorName,
-                    month: month,
-                    year: year,
-                };
-                vehicleIDs.forEach(vID => {
-                    summaryMap[key][vID] = 0;
-                });
-            }
-            
-            const idx = vehicleIDsNorm.indexOf(vehicleIDNorm);
-            if (idx !== -1) {
-                const vID = vehicleIDs[idx];
-                summaryMap[key][vID] += Number(row.qty) || 0;
-            }
-        });
-        setRows(Object.values(summaryMap));
-    }, [rawRows]);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch PO Summary:", err);
+                setLoading(false);
+            });
+    }, [year, month]);
 
     const columns = [
         { data: 'distributorName', type: 'text', title: 'Distributor' },
-        { data: 'month', type: 'numeric', title: 'Month', renderer: monthShortRenderer, width: 80 }, 
+        { data: 'month', type: 'numeric', title: 'Month', renderer: monthShortRenderer, width: 80 },
         { data: 'year', type: 'numeric', title: 'Year', width: 80 },
-        { data: '2W Ni', type: 'numeric', title: '2W Ni', renderer: numberCommaRenderer }, 
+        { data: '2W Ni', type: 'numeric', title: '2W Ni', renderer: numberCommaRenderer },
         { data: '2W PM', type: 'numeric', title: '2W PM', renderer: numberCommaRenderer },
         { data: '4W Ni', type: 'numeric', title: '4W Ni', renderer: numberCommaRenderer },
         { data: '4W PM', type: 'numeric', title: '4W PM', renderer: numberCommaRenderer },
@@ -122,7 +91,7 @@ const POSummary = () => {
             rowHeaders: false
         });
     };
-    
+
     const months = [...Array(12)].map((_, i) => ({
         value: i + 1,
         name: new Date(2000, i, 1).toLocaleString('en-US', { month: 'long' })
@@ -152,21 +121,21 @@ const POSummary = () => {
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                        <input 
-                            type="number" 
-                            value={year} 
-                            onChange={e => setYear(e.target.value)} 
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200" 
-                            placeholder="Year" 
-                            min="2020" 
-                            max="2100" 
+                        <input
+                            type="number"
+                            value={year}
+                            onChange={e => setYear(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                            placeholder="Year"
+                            min="2020"
+                            max="2100"
                         />
                     </div>
                     <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
-                        <select 
-                            value={month} 
-                            onChange={e => setMonth(e.target.value)} 
+                        <select
+                            value={month}
+                            onChange={e => setMonth(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                         >
                             <option value="">All Months</option>
@@ -303,6 +272,9 @@ const POSummary = () => {
                             columns={columns}
                             rowHeaders={true}
                             stretchH="all"
+                            pagination={{
+                                pageSize: '10',
+                            }}
                             licenseKey="non-commercial-and-evaluation"
                             manualColumnResize={true}
                             manualRowResize={true}
