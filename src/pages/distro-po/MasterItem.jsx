@@ -1,35 +1,49 @@
-import React, { useEffect, useState, useRef } from 'react';
-//import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../utils/constants/master-item';
-import { getMasterItems, createMasterItem, updateMasterItem, deleteMasterItem } from '../../api/distro-po/masteritem';
-import { HotTable } from '@handsontable/react-wrapper';
-import Handsontable from 'handsontable';
-import 'handsontable/dist/handsontable.full.min.css';
+import React, { useEffect, useState, useRef } from "react";
+import {
+  getMasterItems,
+  createMasterItem,
+  updateMasterItem,
+  deleteMasterItem,
+} from "../../api/distro-po/masteritem";
+import { HotTable } from "@handsontable/react-wrapper";
+import Handsontable from "handsontable";
+import "handsontable/dist/handsontable.full.min.css";
+import EmptyState from "../../components/ui/Loading-Table";
 
+/**
+ * Custom renderer untuk format angka dengan koma (currency style)
+ */
 function priceCommaRenderer(instance, td, row, col, prop, value, cellProperties) {
   Handsontable.renderers.TextRenderer.apply(this, arguments);
-  if (typeof value === 'number' && !isNaN(value)) {
-    td.textContent = value.toLocaleString('en-US');
-  } else if (typeof value === 'string' && value !== '' && !isNaN(Number(value))) {
-    td.textContent = Number(value).toLocaleString('en-US');
+  if (typeof value === "number" && !isNaN(value)) {
+    td.textContent = value.toLocaleString("en-US");
+  } else if (typeof value === "string" && value !== "" && !isNaN(Number(value))) {
+    td.textContent = Number(value).toLocaleString("en-US");
   }
 }
 
 const columns = [
-  { data: 'vehicle', type: 'text', title: 'Vehicle' },
-  { data: 'vehicleId', type: 'text', title: 'Vehicle ID' },
-  { data: 'category', type: 'text', title: 'Category' },
-  { data: 'productName', type: 'text', title: 'Product Name' },
-  { data: 'spType', type: 'text', title: 'SP Type' },
-  { data: 'itemId', type: 'text', title: 'Item ID' },
-  { data: 'isActive', type: 'checkbox', title: 'Active' },
-  { data: 'price', type: 'numeric', title: 'Price', renderer: priceCommaRenderer, className: 'htRight' },
+  { data: "vehicle", type: "text", title: "Vehicle" },
+  { data: "vehicleId", type: "text", title: "Vehicle ID" },
+  { data: "category", type: "text", title: "Category" },
+  { data: "productName", type: "text", title: "Product Name" },
+  { data: "spType", type: "text", title: "SP Type" },
+  { data: "itemId", type: "text", title: "Item ID" },
+  { data: "isActive", type: "checkbox", title: "Active" },
+  {
+    data: "price",
+    type: "numeric",
+    title: "Price",
+    renderer: priceCommaRenderer,
+    className: "htRight",
+  },
 ];
 
 export default function MasterItemPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [error, setError] = useState("");
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
   const [unsaved, setUnsaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const hotTableComponent = useRef(null);
@@ -42,127 +56,77 @@ export default function MasterItemPage() {
     setLoading(true);
     try {
       const items = await getMasterItems();
-      if (Array.isArray(items)) {
-        setData(items);
-      } else {
-        setData([]);
-      }
-      setError('');
+      setData(Array.isArray(items) ? items : []);
+      setError("");
     } catch {
-      setError('Failed to fetch items');
+      setError("Failed to fetch items");
       setData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const showNotification = (message, type = 'success') => {
+  const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: 'success' });
-    }, 3000);
+    setTimeout(() => setNotification({ show: false, message: "", type: "success" }), 3000);
   };
 
-  const handleAfterChange = async (changes, source) => {
-    if (source === 'edit' && changes) {
+  const handleAfterChange = (changes, source) => {
+    if (source === "edit" && changes) {
       setUnsaved(true);
     }
   };
 
-  
-const handleSaveAll = async () => {
+  const handleSaveAll = async () => {
     setSaving(true);
     let success = true;
-    // Filter out rows where all fields except isActive are empty
-    const filteredRows = data.filter(row => {
-      if (!row || typeof row !== 'object') return false;
-      // Check if all fields except isActive are empty
-      const keysToCheck = ['vehicle', 'vehicleId', 'category', 'productName', 'spType', 'itemId', 'price'];
-      return keysToCheck.some(key => row[key] && String(row[key]).trim() !== '');
+
+    // Filter baris yang valid (tidak kosong)
+    const filteredRows = data.filter((row) => {
+      if (!row || typeof row !== "object") return false;
+      const keysToCheck = ["vehicle", "vehicleId", "category", "productName", "spType", "itemId", "price"];
+      return keysToCheck.some((key) => row[key] && String(row[key]).trim() !== "");
     });
 
-    // Get all current IDs from the backend
-    let currentItems = [];
     try {
-      currentItems = await getMasterItems();
-    } catch {}
-    const currentIds = Array.isArray(currentItems) ? currentItems.map(i => i.id) : [];
-    const updatedIds = filteredRows.filter(r => r.id).map(r => r.id);
-    // IDs to delete: exist in backend but not in updated data
-    const idsToDelete = currentIds.filter(id => !updatedIds.includes(id));
+      const currentItems = await getMasterItems();
+      const currentIds = Array.isArray(currentItems) ? currentItems.map((i) => i.id) : [];
+      const updatedIds = filteredRows.filter((r) => r.id).map((r) => r.id);
+      const idsToDelete = currentIds.filter((id) => !updatedIds.includes(id));
 
-    // Upsert each filtered row
-    for (const row of filteredRows) {
-      const {
-        vehicle,
-        vehicleId,
-        category,
-        productName,
-        spType,
-        itemId,
-        isActive,
-        price
-      } = row;
-      try {
+      // Proses Upsert
+      for (const row of filteredRows) {
         if (row.id) {
-          await updateMasterItem(row.id, {
-            vehicle,
-            vehicleId,
-            category,
-            productName,
-            spType,
-            itemId,
-            isActive,
-            price
-          });
+          await updateMasterItem(row.id, row);
         } else {
-          await createMasterItem({
-            vehicle,
-            vehicleId,
-            category,
-            productName,
-            spType,
-            itemId,
-            isActive,
-            price
-          });
+          await createMasterItem(row);
         }
-      } catch {
-        success = false;
       }
-    }
 
-    // Delete items not present in updated data
-    for (const id of idsToDelete) {
-      try {
+      // Proses Delete
+      for (const id of idsToDelete) {
         await deleteMasterItem(id);
-      } catch {
-        success = false;
       }
-    }
-    if (success) {
-      showNotification('All changes saved successfully', 'success');
-      await fetchItems(); 
+
+      showNotification("All changes saved successfully", "success");
+      await fetchItems();
       setUnsaved(false);
-    } else {
-      showNotification('Some changes failed to save', 'error');
+    } catch {
+      showNotification("Some changes failed to save", "error");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
+
   const handleExportData = () => {
     const hot = hotTableComponent.current.hotInstance;
-    // For @handsontable/react-wrapper, plugin name is 'ExportFile' (capital E)
-    const exportPlugin = hot.getPlugin('ExportFile');
-    if (exportPlugin && typeof exportPlugin.exportAsString === 'function') {
-      exportPlugin.downloadFile('csv', {
-        filename: 'master-items',
-        mimeType: 'text/csv',
-        fileExtension: 'csv',
+    const exportPlugin = hot.getPlugin("ExportFile");
+    if (exportPlugin) {
+      exportPlugin.downloadFile("csv", {
+        filename: "master-items",
         columnHeaders: true,
-        rowHeaders: false
+        rowHeaders: false,
       });
-    } else {
-      showNotification('Export plugin not available', 'error');
     }
   };
 
@@ -176,7 +140,7 @@ const handleSaveAll = async () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2"
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2"
             onClick={handleExportData}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,91 +149,58 @@ const handleSaveAll = async () => {
             Export
           </button>
           <button
-            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-all duration-200 flex items-center gap-2"
+            className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-all flex items-center gap-2"
             onClick={handleSaveAll}
             disabled={saving}
           >
-            {saving ? (
-              <>
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V2" />
-                </svg>
-                Save All
-              </>
-            )}
+            {saving ? "Saving..." : "Save All"}
           </button>
         </div>
       </div>
 
-      {/* Alert for unsaved changes */}
+      {/* Alerts */}
       {unsaved && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 text-amber-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <p className="text-amber-800">You have unsaved changes. Don't forget to save your work!</p>
-          </div>
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-6 italic shadow-sm">
+          ⚠️ You have unsaved changes. Don't forget to save your work!
         </div>
       )}
-
-      {/* Error Alert */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-red-800">{error}</p>
-          </div>
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6 shadow-sm">
+          ❌ {error}
         </div>
       )}
 
-      {/* Handsontable */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <style>{`
-          .handsontable {
-            font-family: inherit;
-            font-size: 0.875rem;
-          }
-          .handsontable thead th {
-            background-color: #f8fafc;
-            color: #475569;
-            font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
-          }
-          .handsontable tbody tr:hover td {
-            background-color: #f8fafc;
-          }
-          .handsontable td {
-            border-color: #f1f5f9;
-          }
-          .handsontable .htDimmed {
-            color: #64748b;
-          }
-          .handsontable input[type=checkbox] {
-            margin: 0;
-          }
-        `}</style>
-        <div style={{ width: '100%', minHeight: 500 }}>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading master items...</span>
-            </div>
-          ) : (
+      {/* Main Content Area */}
+      {loading ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-24 flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+          <span className="text-gray-500 font-medium">Loading catalog data...</span>
+        </div>
+      ) : data.length === 0 ? (
+        /* Render EmptyState langsung tanpa pembungkus div bg-white tambahan 
+           untuk menghindari efek "box-in-box" */
+        <EmptyState
+          title="No Master Items Found"
+          description="Your product catalog is currently empty. Start by adding items to the table."
+        />
+      ) : (
+        /* Box Putih hanya muncul jika ada data (Tabel ditampilkan) */
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <style>{`
+            .htContainer { position: relative; z-index: 1 !important; }
+            .handsontable thead th { 
+              background-color: #f8fafc; 
+              color: #475569; 
+              font-weight: 600; 
+              z-index: 2 !important; 
+            }
+            .handsontable td { border-color: #f1f5f9; }
+          `}</style>
+          <div style={{ width: "100%", height: 550 }}>
             <HotTable
               ref={hotTableComponent}
               data={data}
-              colHeaders={columns.map(col => col.title)}
+              colHeaders={columns.map((col) => col.title)}
               columns={columns}
               rowHeaders={true}
               stretchH="all"
@@ -279,35 +210,25 @@ const handleSaveAll = async () => {
               manualRowResize={true}
               filters={true}
               dropdownMenu={true}
-              contextMenu={['row_above', 'row_below', 'remove_row', 'undo', 'redo', 'make_read_only', 'alignment']}
-              height={500}
-              minRows={10}
+              contextMenu={["row_above", "row_below", "remove_row", "undo", "redo", "alignment"]}
+              height="100%"
+              minRows={5}
               minSpareRows={1}
               className="htContainer htHandsontable"
             />
-          )}
-        </div>
-      </div>
-
-      {/* Notification */}
-      {notification.show && (
-        <div className={`fixed bottom-4 right-4 z-50 max-w-sm w-full bg-white rounded-lg shadow-lg border-l-4 p-4 ${
-          notification.type === 'success' ? 'border-green-500' : 'border-red-500'
-        }`}>
-          <div className="flex items-center">
-            {notification.type === 'success' ? (
-              <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            )}
-            <p className={`font-medium ${notification.type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
-              {notification.message}
-            </p>
           </div>
+        </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification.show && (
+        <div className={`fixed bottom-4 right-4 z-50 p-4 rounded-lg shadow-2xl border-l-4 bg-white min-w-[300px] flex items-center gap-3 ${
+          notification.type === "success" ? "border-green-500" : "border-red-500"
+        }`}>
+          <div className={`p-1 rounded-full ${notification.type === "success" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
+            {notification.type === "success" ? "✓" : "✕"}
+          </div>
+          <p className="font-semibold text-gray-800">{notification.message}</p>
         </div>
       )}
     </div>
