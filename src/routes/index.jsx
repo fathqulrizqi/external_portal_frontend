@@ -13,6 +13,7 @@ import ResetPassword from "../pages/public/auth/ResetPassword";
 import ResetPasswordConfirmation from "../pages/public/auth/ResetPasswordConfirmation";
 import DistroPoRoutes from "./distro-po/distro-po-routes";
 import DistroPoDashboardRoutes from "./distro-po/distro-po-dashboard-routes";
+import CompanyProfilePage from '../pages/company/CompanyProfile';
 
 // Other routes Start
 //import DistroPoRoutes from "./distro-po";
@@ -59,6 +60,12 @@ const router = createBrowserRouter([
       { index: true, element: <DashboardLayout /> },
       { path: ":menu", element: <DashboardLayout /> },
     ],
+  },
+
+  // COMPANY PROFILE
+  {
+    path: "/company/profile",
+    element: <CompanyProfilePage />,
   },
 
   // DISTRO PO (berdiri sendiri)

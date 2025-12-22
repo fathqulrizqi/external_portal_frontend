@@ -315,6 +315,13 @@ const userInitial = profile?.fullName?.charAt(0).toUpperCase();
                       Profile
                     </Link>
                     <Link
+                      to="/distro-po/dashboard/company/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                      onClick={() => setProfileDropdownOpen(false)}
+                    >
+                      Company Profile
+                    </Link>
+                    <Link
                       to="#"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                     >
