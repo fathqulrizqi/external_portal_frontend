@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, Link, NavLink, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { removeToken } from "../utils/cookies";
@@ -11,12 +11,16 @@ import {
   faList,
   faChartSimple,
 } from "@fortawesome/free-solid-svg-icons";
+import { getProfile } from "../api/hamburger-menu";
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState("");
 
   const segment = location.pathname.split("/")[1];
   const appName = segment || "public";
@@ -46,6 +50,25 @@ export default function DashboardLayout() {
     // Implement search functionality here
     console.log("Searching for:", searchQuery);
   };
+
+  useEffect(() => {
+  const fetchProfile = async () => {
+    setLoadingProfile(true);
+
+    const res = await getProfile();
+
+    if (res.success) {
+      setProfile(res.data);
+    } else {
+      setProfileError(res.message);
+    }
+
+    setLoadingProfile(false);
+  };
+
+  fetchProfile();
+}, []);
+
 
   // HELPER
   const navClass = ({ isActive }) =>
@@ -93,12 +116,19 @@ export default function DashboardLayout() {
     },
   ];
 
-  const profile = {
-    name: "Ariana Grande",
-    email: "ariana.grande@mail.com",
-  };
+  // const profile = {
+  //   name: "Ariana Grande",
+  //   email: "ariana.grande@mail.com",
+  // };
+const userInitial = profile?.fullName?.charAt(0).toUpperCase();
 
-  const userInitial = profile.name?.charAt(0).toUpperCase();
+  if (loadingProfile) {
+  return <p className="p-6 text-gray-500">Loading profile...</p>;
+  }
+
+  if (profileError) {
+    return <p className="p-6 text-red-500">{profileError}</p>;
+  }
 
   return (
     <div className="h-screen w-full bg-gray-100 flex overflow-hidden">
@@ -269,12 +299,14 @@ export default function DashboardLayout() {
 
                 {/* Dropdown menu */}
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">
-                        {profile.name}
-                      </p>
-                      <p className="text-xs text-gray-500">{profile.email}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {profile.fullName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {profile.phone}
+                    </p>
                     </div>
                     <Link
                       to="profile"

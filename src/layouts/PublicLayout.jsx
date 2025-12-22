@@ -11,7 +11,7 @@ export default function PublicLayout() {
   return (
     <div className="w-full flex flex-col bg-gray-50">
       {/* NAVBAR */}
-      <header className="w-full shadow bg-black">
+      <header className="w-full sticky top-0 z-50 bg-black">
         <Header
           menus={[
             { label: "E-Bidding", to: "#" },
@@ -19,7 +19,6 @@ export default function PublicLayout() {
           ]}
           showAuth={false}
         />
-
       </header>
 
       {isLandingPage && <CoverHero />}

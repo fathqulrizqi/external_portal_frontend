@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { API } from "../api";
 import { getToken } from "../utils/cookies";
+import { getProfile } from "../api/hamburger-menu";
 
 export default function useSidebarAuth() {
   const [sidebar, setSidebar] = useState(null);
@@ -24,6 +25,8 @@ export default function useSidebarAuth() {
         if (data?.status === "Success") {
           setSidebar(data.data);
         }
+
+        getProfile();
       } catch (err) {
         const status = err?.response?.status;
         const msg = err?.response?.data?.errors;

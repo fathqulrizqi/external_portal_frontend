@@ -80,7 +80,7 @@ function MobileMenuIcon() {
 
 function NavbarLayout({ logoSize, showFullMenu, menus, showAuth, authBasePath }) {
   return (
-    <nav className="bg-white w-full">
+    <nav className="bg-white w-full sticky top-0 z-50">
       <div className="flex items-center px-[48px] w-full">
         <Logo width={logoSize.w} height={logoSize.h} />
 
