@@ -9,6 +9,7 @@ import { Save, Printer, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
 import { saveDistributorPO } from '../../api/distro-po/distro-po';
 import { updateDistributorPO } from '../../api/distro-po/distro-po';
 import { getMasterItems } from '../../api/distro-po/masteritem';
+import { fetchLatestItemPrice } from '../../api/distro-po/masteritem-price';
 import 'handsontable/dist/handsontable.full.min.css';
 
 // Custom renderer for greyed-out (readOnly) columns
@@ -162,11 +163,11 @@ const DistributorPOForm = () => {
   };
 
   // Handler for all table changes
-  const handleTableChange = (changes, source) => {
+  const handleTableChange = async (changes, source) => {
     if (changes) setUnsaved(true);
     if (changes) {
-      const newItems = [...items];
-      changes.forEach(([rowIdx, prop, oldValue, newValue]) => {
+      let newItems = [...items];
+      for (const [rowIdx, prop, oldValue, newValue] of changes) {
         if (prop === 'qty' && prop in newItems[rowIdx]) {
           newItems[rowIdx][prop] = newValue;
         }
@@ -179,7 +180,10 @@ const DistributorPOForm = () => {
             newItems[rowIdx].category = selected.category || '';
             newItems[rowIdx].vehicleId = selected.vehicleId || '';
             newItems[rowIdx].vehicle = selected.vehicle || '';
-            newItems[rowIdx].price = selected.price ?? null;
+            // Fetch price from new price table (API call)
+            const price = await fetchLatestItemPrice(selected.itemId, headerInfo.custCode);
+            console.log('Fetched price for', selected.itemId, 'and', headerInfo.custCode, ':', price);
+            newItems[rowIdx].price = price;
           } else {
             newItems[rowIdx].partNumber = '';
             newItems[rowIdx].type = '';
@@ -197,7 +201,7 @@ const DistributorPOForm = () => {
         if (prop === 'price' && prop in newItems[rowIdx]) {
           newItems[rowIdx][prop] = newValue;
         }
-      });
+      }
       setItems(newItems);
       setSummary(calculateSummary(newItems));
     } else if (source === 'LoadData' || source === 'spliceRow' || source === 'insertRow' || source === 'removeRow') {
@@ -240,7 +244,8 @@ const DistributorPOForm = () => {
       return;
     }
     setSaveStatus({ loading: true, message: '', error: false });
-    const { salesPONumber, ...headerInfoClean } = headerInfo;
+    // Remove fields not in Distro_PO_Header (ngkaxSO)
+    const { salesPONumber, ngkaxSO, ...headerInfoClean } = headerInfo;
     // Filter out items where both partName and qty are null/empty
     const filteredItems = items.filter(item => {
       const partNameEmpty = item.partName === null || item.partName === undefined || item.partName === '';
@@ -577,7 +582,7 @@ const DistributorPOForm = () => {
                   afterChange={handleTableChange}
                   height={400}
                   minRows={15}
-                  minSpareRows={1}
+                  minSpareRows={0}
                   filters={true}
                   dropdownMenu={true}
                   columnSorting={true}

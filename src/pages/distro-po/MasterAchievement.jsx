@@ -7,27 +7,84 @@ import {
   updateMasterAchievement,
   deleteMasterAchievement
 } from '../../api/distro-po/masterAchievement';
+import { getAllCompanies } from '../../api/company/list';
 import { Button } from '../../components/ui/Button.jsx';
 
-const columns = [
-  { data: 'customerCode', type: 'text', title: 'Customer Code' },
-  { data: 'customerName', type: 'text', title: 'Customer Name' },
-  { data: 'city', type: 'text', title: 'City' },
-  { data: 'targetQty', type: 'numeric', title: 'Target QTY' },
-  { data: 'targetAmount', type: 'numeric', title: 'Target Amount' },
-  { data: 'vehicle', type: 'text', title: 'Vehicle' },
-  { data: 'vehicleId', type: 'text', title: 'Vehicle ID' },
-  { data: 'periodYear', type: 'numeric', title: 'Period Year' },
-];
 
 export default function MasterAchievementHotTable() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [companies, setCompanies] = useState([]);
   const hotRef = useRef(null);
+
+  // Prepare columns with dropdown and read-only logic
+  const columns = [
+    {
+      data: 'customerCode',
+      type: 'text',
+      title: 'Customer Code',
+      renderer: (instance, td, row, col, prop, value, cellProperties) => {
+        td.innerHTML = value || '';
+      },
+    },
+    {
+      data: 'customerName',
+      type: 'dropdown',
+      title: 'Customer Name',
+      source: companies.map(c => c.companyName).filter(Boolean),
+      strict: true,
+      allowInvalid: false,
+      renderer: (instance, td, row, col, prop, value, cellProperties) => {
+        td.innerHTML = value || '';
+        td.className = 'htDropdown';
+      },
+    },
+    {
+      data: 'city',
+      type: 'text',
+      title: 'City',
+      renderer: (instance, td, row, col, prop, value, cellProperties) => {
+        td.innerHTML = value || '';
+      },
+    },
+    {
+      data: 'targetQty',
+      type: 'numeric',
+      title: 'Target QTY',
+      numericFormat: { pattern: '0,0', culture: 'en-US' },
+      renderer: (instance, td, row, col, prop, value, cellProperties) => {
+        if (value !== null && value !== undefined && value !== '') {
+          td.innerHTML = Number(value).toLocaleString('en-US');
+        } else {
+          td.innerHTML = '';
+        }
+        td.className = 'htRight';
+      },
+    },
+    {
+      data: 'targetAmount',
+      type: 'numeric',
+      title: 'Target Amount',
+      numericFormat: { pattern: '0,0', culture: 'en-US' },
+      renderer: (instance, td, row, col, prop, value, cellProperties) => {
+        if (value !== null && value !== undefined && value !== '') {
+          td.innerHTML = Number(value).toLocaleString('en-US');
+        } else {
+          td.innerHTML = '';
+        }
+        td.className = 'htRight';
+      },
+    },
+    { data: 'vehicle', type: 'text', title: 'Vehicle' },
+    { data: 'vehicleId', type: 'text', title: 'Vehicle ID' },
+    { data: 'periodYear', type: 'numeric', title: 'Period Year' },
+  ];
+
 
   useEffect(() => {
     fetchData();
+    fetchCompanies();
   }, []);
 
   const fetchData = async () => {
@@ -42,35 +99,56 @@ export default function MasterAchievementHotTable() {
     setLoading(false);
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const res = await getAllCompanies("Distro-PO");
+      setCompanies(res.data);
+    } catch (err) {
+      setCompanies([]);
+    }
+  };
+
   const handleSave = async () => {
     setError(null);
     setLoading(true);
     const tableData = hotRef.current.hotInstance.getSourceData();
     try {
-      // Find new, updated, and deleted rows
-      // For simplicity, send all rows as upserts, and delete missing ones
-      const existingIds = data.map(row => row.id).filter(Boolean);
-      const newRows = tableData.filter(row => !row.id && row.customerCode);
-      const updatedRows = tableData.filter(row => row.id);
-      const deletedIds = existingIds.filter(id => !tableData.some(row => row.id === id));
-
-      // Create new
-      for (const row of newRows) {
-        await createMasterAchievement(row);
+      // Truncate all existing MasterAchievement records, then create new ones from tableData
+      // 1. Delete all existing
+      for (const row of data) {
+        if (row.id) {
+          await deleteMasterAchievement(row.id);
+        }
       }
-      // Update existing
-      for (const row of updatedRows) {
-        await updateMasterAchievement(row.id, row);
-      }
-      // Delete removed
-      for (const id of deletedIds) {
-        await deleteMasterAchievement(id);
+      // 2. Create all rows that have a customerCode (required field)
+      for (const row of tableData) {
+        if (row.customerCode) {
+          await createMasterAchievement(row);
+        }
       }
       await fetchData();
     } catch (err) {
       setError('Failed to save changes');
     }
     setLoading(false);
+  };
+
+  // Autofill customerCode and city when customerName changes
+  const handleAfterChange = (changes, source) => {
+    if (!changes || source === 'loadData') return;
+    const hot = hotRef.current.hotInstance;
+    changes.forEach(([row, prop, oldValue, newValue]) => {
+      if (prop === 'customerName' && newValue && newValue !== oldValue) {
+        const company = companies.find(c => c.companyName === newValue);
+        if (company) {
+          hot.setDataAtCell(row, columns.findIndex(c => c.data === 'customerCode'), company.companyCode || '');
+          hot.setDataAtCell(row, columns.findIndex(c => c.data === 'city'), company.companyCity || '');
+        } else {
+          hot.setDataAtCell(row, columns.findIndex(c => c.data === 'customerCode'), '');
+          hot.setDataAtCell(row, columns.findIndex(c => c.data === 'city'), '');
+        }
+      }
+    });
   };
 
   return (
@@ -96,6 +174,10 @@ export default function MasterAchievementHotTable() {
         manualColumnMove={true}
         contextMenu={true}
         className="htMiddle"
+        afterChange={handleAfterChange}
+        filters={true}
+        columnSorting={{ indicator: true }}
+        dropdownMenu={true}
       />
     </div>
   );

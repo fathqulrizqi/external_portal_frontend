@@ -63,13 +63,32 @@ export default function DashboardLayout() {
         
         <nav className="space-y-2">
           <Link 
-            to="#" 
+            to="/distro-po/dashboard" 
             className="flex items-center px-3 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
           >
             <svg className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             Dashboard
+          </Link>
+          <Link
+            to="/distro-po/dashboard/masteritem-price"
+            className="flex items-center px-3 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+          >
+            <svg className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8M12 8v8" />
+            </svg>
+            Master Item Price
+          </Link>
+          <Link 
+            to="/distro-po/dashboard/achievement-report" 
+            className="flex items-center px-3 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+          >
+            <svg className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Achievement Report
           </Link>
           <Link 
             to="/distro-po/dashboard/masteritem" 
@@ -81,13 +100,22 @@ export default function DashboardLayout() {
             Master Item
           </Link>
           <Link 
-            to="/distro-po/dashboard/masterachivement" 
+            to="/distro-po/dashboard/masterachievement" 
             className="flex items-center px-3 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
           >
             <svg className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            Master Achivement
+            Master Achievement
+          </Link>
+          <Link 
+            to="/distro-po/dashboard/masterincentive" 
+            className="flex items-center px-3 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+          >
+            <svg className="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            Master Incentive
           </Link>
           <Link 
             to="/distro-po/dashboard/list" 
@@ -186,7 +214,7 @@ export default function DashboardLayout() {
 
                 {/* Dropdown menu */}
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute userNav z-9999 right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-200">
                       <p className="text-sm font-medium text-gray-900">User Name</p>
                       <p className="text-xs text-gray-500">user@example.com</p>
@@ -196,6 +224,13 @@ export default function DashboardLayout() {
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                     >
                       Profile
+                    </Link>
+                    <Link
+                      to="/distro-po/dashboard/company/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                      onClick={() => setProfileDropdownOpen(false)}
+                    >
+                      Company Profile
                     </Link>
                     <Link
                       to="#"

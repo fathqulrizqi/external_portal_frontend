@@ -7,8 +7,8 @@ import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 
 function poNumberLinkRenderer(instance, td, row, col, prop, value, cellProperties) {
-    Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, prop, value, cellProperties]); 
-    
+    Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, prop, value, cellProperties]);
+
     const rowData = instance.getSourceDataAtRow(row);
     const uuid = rowData.uuid;
 
@@ -16,8 +16,8 @@ function poNumberLinkRenderer(instance, td, row, col, prop, value, cellPropertie
         td.innerHTML = `<a href="/distro-po/dashboard/form/${uuid}" class='text-blue-600 underline hover:text-blue-800'>${value}</a>`;
         td.style.cursor = 'pointer';
         td.onclick = (e) => {
-             e.preventDefault(); 
-             window.location.href = `/distro-po/dashboard/form/${uuid}`;
+            e.preventDefault();
+            window.location.href = `/distro-po/dashboard/form/${uuid}`;
         };
     } else {
         td.textContent = value;
@@ -28,58 +28,58 @@ function poNumberLinkRenderer(instance, td, row, col, prop, value, cellPropertie
 function dateRenderer(instance, td, row, col, prop, value, cellProperties) {
     // FIX: Teruskan parameter secara eksplisit, jangan gunakan 'arguments'
     Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, prop, value, cellProperties]);
-    
+
     if (!value) {
         td.textContent = '';
         return;
     }
-    
+
     // Logika format tanggal yang sama seperti di DataTables Anda
     const date = new Date(value);
     if (isNaN(date.getTime())) {
         td.textContent = value; // Tampilkan nilai asli jika tidak valid
     } else {
-        td.textContent = date.toLocaleDateString('en-GB', { 
-            day: '2-digit', 
-            month: 'short', 
-            year: 'numeric' 
+        td.textContent = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
         }).replace(/ /g, '-');
     }
 }
 
 // Kolom untuk Handsontable
 const columns = [
-    { 
-        data: 'poNumber', 
-        title: 'PO Number', 
-        renderer: poNumberLinkRenderer 
+    {
+        data: 'poNumber',
+        title: 'PO Number',
+        renderer: poNumberLinkRenderer
     },
     { data: 'distributorName', type: 'text', title: 'Distributor' },
     { data: 'customerCode', type: 'text', title: 'Customer Code' },
-    { 
-        data: 'poDate', 
-        title: 'Date', 
-        type: 'date', 
+    {
+        data: 'poDate',
+        title: 'Date',
+        type: 'date',
         dateFormat: 'DD-MMM-YYYY',
-        renderer: dateRenderer 
+        renderer: dateRenderer
     },
     { data: 'niterraSO', type: 'text', title: 'Niterra SO' },
     { data: 'niterraPO', type: 'text', title: 'Niterra PO' },
-    { 
-        data: 'createdAt', 
-        type: 'text', 
-        title: 'Created At', 
+    {
+        data: 'createdAt',
+        type: 'text',
+        title: 'Created At',
         renderer: (instance, td, row, col, prop, value, cellProperties) => { // Pastikan semua parameter ada
             // FIX: Teruskan parameter secara eksplisit, jangan gunakan 'arguments'
             Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, prop, value, cellProperties]);
             td.textContent = value ? value.slice(0, 10) : '';
         },
-        readOnly: true 
+        readOnly: true
     },
-    { 
-        data: 'updatedAt', 
-        type: 'text', 
-        title: 'Updated At', 
+    {
+        data: 'updatedAt',
+        type: 'text',
+        title: 'Updated At',
         renderer: (instance, td, row, col, prop, value, cellProperties) => { // Pastikan semua parameter ada
             // FIX: Teruskan parameter secara eksplisit, jangan gunakan 'arguments'
             Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, prop, value, cellProperties]);
@@ -100,7 +100,7 @@ const POList = () => {
         async function fetchPOs() {
             setLoading(true);
             try {
-                const result = await getAllDistributorPOs(); 
+                const result = await getAllDistributorPOs();
                 if (result.success) {
                     setPOList(result.data || []);
                     setError('');
@@ -108,7 +108,7 @@ const POList = () => {
                     setError(result.message || 'Failed to fetch PO list.');
                 }
             } catch (e) {
-                 setError('Network Error or API structure mismatch.');
+                setError('Network Error or API structure mismatch.');
             } finally {
                 setLoading(false);
             }
@@ -137,7 +137,7 @@ const POList = () => {
 
             {loading ? <p>Loading...</p> : null}
             {error ? <p className="text-red-500">{error}</p> : null}
-            
+
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <style>{`
                   /* Styling Handsontable agar mirip dengan DataTables atau disesuaikan */
@@ -172,8 +172,8 @@ const POList = () => {
                             columns={columns}
                             rowHeaders={true}
                             pagination={{
-        pageSize: '20',
-      }}
+                                pageSize: '20',
+                            }}
                             stretchH="all"
                             licenseKey="non-commercial-and-evaluation"
                             manualColumnResize={true}
