@@ -44,10 +44,9 @@ export default function CompanyProfilePage() {
   if (error && company) return <div className="text-red-600">{error}</div>;
 
   return (
-    <div className="max-w-2xl mx-auto mt-8">
+    <div className="max-w-2xl mx-auto">
       {editing || !company ? (
         <>
-          <h2 className="text-xl font-bold mb-4">{company ? 'Edit' : 'Create'} Company Profile</h2>
           {formError && <div className="text-red-600 mb-2">{formError}</div>}
           <CompanyProfileForm
             initialValues={company || {}}

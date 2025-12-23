@@ -10,6 +10,8 @@ import MasterIncentivePage from "../../pages/distro-po/MasterIncentive";
 import SubmittedPriceListPage from "../../pages/distro-po/SubmittedPriceListPage";
 import RequireAuth from "../../middleware/RequireAuth";
 import Profile from "../../pages/admin/hamburger-menu/profile";
+import { CompanyProfileForm } from "../../components/company/CompanyProfileForm";
+import CompanyProfilePage from "../../pages/company/CompanyProfile";
 
 export const DistroPoDashboardRoutes = [
   {
@@ -28,6 +30,7 @@ export const DistroPoDashboardRoutes = [
           { path: "submitted-price-list", element: <SubmittedPriceListPage /> },
       { path: "masterachievement", element: <MasterAchievementPage /> },
       { path: "profile", element: <Profile /> },
+      { path: "company-profile", element: <CompanyProfilePage /> },
     ],
   },
 ];
