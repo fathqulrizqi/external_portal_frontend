@@ -2,7 +2,7 @@ import { API } from ".";
 
 export const getSidebar = async () => {
   try {
-    const response = await API.get("/user/sidebar");
+    const response = await API.get("/users/sidebar");
 
     return { 
       success: true, 

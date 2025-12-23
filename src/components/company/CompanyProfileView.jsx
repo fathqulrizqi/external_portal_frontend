@@ -1,208 +1,211 @@
-import React from 'react';
-import { Card } from 'primereact/card';
-import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
-import { Divider } from 'primereact/divider';
-import { Avatar } from 'primereact/avatar';
-import { Fieldset } from 'primereact/fieldset';
 
-/**
- * Company Profile View Component with PrimeReact styling
- * @param {object} props
- * @param {object} props.company - The company profile data
- * @param {function} [props.onEdit] - Edit callback
- * @param {function} [props.onDelete] - Delete callback
- */
+import React from "react";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { Tag } from "primereact/tag";
+import { Image } from "primereact/image";
+
 export function CompanyProfileView({ company, onEdit, onDelete }) {
   if (!company) {
     return (
-      <Card>
-        <div className="text-center p-6">
-          <i className="pi pi-building text-6xl text-400 mb-4"></i>
-          <p className="text-xl text-600 mb-4">No company profile found.</p>
-          <Button 
-            label="Create Company Profile" 
-            icon="pi pi-plus" 
-            className="p-button-outlined"
+      <div className="w-full">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800">Company Profile</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            No company profile found
+          </p>
+        </div>
+
+        <div className="flex justify-center">
+          <Button
+            label="Create Company Profile"
+            icon="pi pi-plus"
+            className="p-button-success"
             onClick={onEdit}
           />
         </div>
-      </Card>
+      </div>
     );
   }
 
-  const getStatusSeverity = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'active': return 'success';
-      case 'inactive': return 'secondary';
-      case 'blacklisted': return 'danger';
-      case 'pending': return 'warning';
-      case 'suspended': return 'info';
-      default: return 'secondary';
-    }
-  };
+  const statusSeverity = {
+    PT: "success",
+    CV: "info",
+    BUMN: "warning",
+  }[company.companyStatus] || "secondary";
 
-  const getCompanyTypeIcon = (type) => {
-    switch (type?.toLowerCase()) {
-      case 'vendor': return 'pi pi-shopping-cart';
-      case 'distributor': return 'pi pi-truck';
-      case 'consultant': return 'pi pi-briefcase';
-      case 'contractor': return 'pi pi-hammer';
-      case 'manufacturer': return 'pi pi-cog';
-      case 'supplier': return 'pi pi-box';
-      default: return 'pi pi-building';
-    }
-  };
+  const imageUrl = company.urlImage 
+    ? `${import.meta.env.VITE_API_BASE_URL}/images/Company/${company.urlImage}`
+    : "https://asamco.com/wp-content/uploads/2021/02/company-icon-vector-isolated-white-background-company-transparent-sign-company-icon-vector-isolated-white-background-company-134078740.jpg";
 
-  const header = (
-    <div className="flex align-items-center gap-3">
-      <Avatar 
-        icon="pi pi-building" 
-        size="large" 
-        className="bg-blue-500 text-white"
-      />
-      <div>
-        <h2 className="text-2xl font-bold text-900 m-0">{company.companyName || company.name || 'Unnamed Company'}</h2>
-        <div className="flex align-items-center gap-2 mt-1">
-          <i className={`pi ${getCompanyTypeIcon(company.companyType)} text-sm text-600`}></i>
-          <span className="text-sm text-600 capitalize">{company.companyType || 'Unknown Type'}</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const footer = (
-    <div className="flex gap-2">
-      {onEdit && (
-        <Button 
-          icon="pi pi-pencil" 
-          label="Edit Profile" 
-          onClick={onEdit}
-          className="p-button-outlined"
-        />
-      )}
-      {onDelete && (
-        <Button 
-          icon="pi pi-trash" 
-          label="Delete" 
-          onClick={onDelete}
-          className="p-button-outlined p-button-danger"
-        />
-      )}
-    </div>
-  );
+  const labelClass = "block text-md font-medium text-gray-700 mb-2";
 
   return (
-    <Card header={header} footer={footer} className="shadow-2">
-      <div className="grid">
-        {/* Status Badge */}
-        <div className="col-12">
-          <div className="flex justify-content-end mb-3">
+    <div className="w-full">
+      {/* Header - Matches Form Header */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Company Profile</h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Company information and details
+        </p>
+      </div>
+
+      {/* Company Image - Matches Form Layout */}
+      <div className="mb-6">
+        <label className={labelClass}>Company Image</label>
+        <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6">
+          <Image
+            src={imageUrl}
+            alt="Company Image"
+            width="180"
+            preview
+            className="rounded"
+          />
+          <div className="flex flex-col gap-2">
             <Tag 
-              value={company.companyStatus || 'Unknown'} 
-              severity={getStatusSeverity(company.companyStatus)}
-              className="text-uppercase"
+              value={company.companyStatus} 
+              severity={statusSeverity}
+              className="text-sm"
             />
+            <span className="text-gray-700 font-medium uppercase">
+              {company.companyType}
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Company Information */}
-        <div className="col-12 md:col-6">
-          <Fieldset legend="Company Information" className="mb-4">
-            <div className="space-y-3">
-              {company.companyCode && (
-                <div className="flex justify-content-between">
-                  <span className="text-600 font-medium">Company Code:</span>
-                  <span className="text-900">{company.companyCode}</span>
-                </div>
-              )}
-              
-              {company.npwp && (
-                <div className="flex justify-content-between">
-                  <span className="text-600 font-medium">NPWP:</span>
-                  <span className="text-900 font-mono">{company.npwp}</span>
-                </div>
-              )}
-              
-              {company.companyCity && (
-                <div className="flex justify-content-between">
-                  <span className="text-600 font-medium">City:</span>
-                  <span className="text-900">{company.companyCity}</span>
-                </div>
-              )}
-            </div>
-          </Fieldset>
-        </div>
-
-        {/* Contact Information */}
-        <div className="col-12 md:col-6">
-          <Fieldset legend="Contact Information" className="mb-4">
-            <div className="space-y-3">
-              {company.companyEmail && (
-                <div className="flex justify-content-between">
-                  <span className="text-600 font-medium">Email:</span>
-                  <a href={`mailto:${company.companyEmail}`} className="text-blue-600 hover:text-blue-800">
-                    {company.companyEmail}
-                  </a>
-                </div>
-              )}
-              
-              {company.companyTelpFax && (
-                <div className="flex justify-content-between">
-                  <span className="text-600 font-medium">Phone/Fax:</span>
-                  <span className="text-900">{company.companyTelpFax}</span>
-                </div>
-              )}
-            </div>
-          </Fieldset>
-        </div>
-
-        {/* Address */}
-        {company.companyAddress && (
-          <div className="col-12">
-            <Fieldset legend="Address" className="mb-4">
-              <p className="text-900 m-0">{company.companyAddress}</p>
-            </Fieldset>
+      {/* Company Information - Form-style Layout */}
+      <div className="space-y-4">
+        {/* Company Name */}
+        <div>
+          <label className={labelClass}>Company Name</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900 font-medium">
+            {company.companyName}
           </div>
-        )}
+        </div>
 
         {/* Segments */}
-        {company.segments && company.segments.length > 0 && (
-          <div className="col-12">
-            <Fieldset legend="Business Segments" className="mb-4">
+        <div>
+          <label className={labelClass}>Segments</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50">
+            {company.segments?.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {company.segments.map((segment, index) => (
+                {company.segments.map((s, i) => (
                   <Tag 
-                    key={index}
-                    value={typeof segment === 'object' ? segment.segmentName : segment}
-                    severity="info"
+                    key={i} 
+                    value={s.segmentName || `Segment ${s}`} 
+                    severity="secondary" 
+                    className="text-sm"
                     rounded
                   />
                 ))}
               </div>
-            </Fieldset>
+            ) : (
+              <span className="text-gray-500">No segments selected</span>
+            )}
           </div>
-        )}
+        </div>
 
-        {/* Additional Information */}
-        <div className="col-12">
-          <Divider />
-          <div className="grid text-sm">
-            <div className="col-6 md:col-3">
-              <span className="text-600">Created:</span>
-              <div className="text-900 font-medium">
-                {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : 'N/A'}
-              </div>
-            </div>
-            <div className="col-6 md:col-3">
-              <span className="text-600">Last Updated:</span>
-              <div className="text-900 font-medium">
-                {company.updatedAt ? new Date(company.updatedAt).toLocaleDateString() : 'N/A'}
-              </div>
-            </div>
+        {/* Status */}
+        <div>
+          <label className={labelClass}>Status</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900 font-medium">
+            {company.otherStatus || company.companyStatus}
+          </div>
+        </div>
+
+        {/* NPWP */}
+        <div>
+          <label className={labelClass}>NPWP</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900 font-mono">
+            {company.npwp}
+          </div>
+        </div>
+
+        {/* Address */}
+        <div>
+          <label className={labelClass}>Address</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900">
+            {company.companyAddress}
+          </div>
+        </div>
+
+        {/* Phone/Fax */}
+        <div>
+          <label className={labelClass}>Phone / Fax</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900">
+            {company.companyTelpFax}
+          </div>
+        </div>
+
+        {/* City */}
+        <div>
+          <label className={labelClass}>City</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900">
+            {company.companyCity}
+          </div>
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className={labelClass}>Email</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50">
+            <a 
+              href={`mailto:${company.companyEmail}`} 
+              className="text-primary font-medium no-underline hover:underline"
+            >
+              {company.companyEmail}
+            </a>
+          </div>
+        </div>
+
+        {/* Company Code */}
+        <div>
+          <label className={labelClass}>Company Code</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900 font-mono">
+            {company.companyCode}
+          </div>
+        </div>
+
+        {/* Application */}
+        <div>
+          <label className={labelClass}>Application</label>
+          <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900">
+            {company.application}
           </div>
         </div>
       </div>
-    </Card>
+
+      {/* Actions - Matches Form Actions */}
+      <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
+        <Button
+          type="button"
+          label="Edit"
+          icon="pi pi-pencil"
+          className="p-button-info"
+          onClick={onEdit}
+        />
+        {onDelete && (
+          <Button
+            type="button"
+            label="Delete"
+            icon="pi pi-trash"
+            className="p-button-danger"
+            onClick={onDelete}
+          />
+        )}
+      </div>
+
+      {/* Meta Info */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>ID: {company.id || 'N/A'}</span>
+          <div className="flex gap-4">
+            <span>Created: {company.createdAt ? new Date(company.createdAt).toLocaleDateString('id-ID') : "-"}</span>
+            <span>Last Update: {company.updatedAt ? new Date(company.updatedAt).toLocaleDateString('id-ID') : "-"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -20,7 +20,7 @@ export default function useSidebarAuth() {
 
     const fetchSidebar = async () => {
       try {
-        const { data } = await API.get("/user/sidebar");
+        const { data } = await API.get("/users/sidebar");
 
         if (data?.status === "Success") {
           setSidebar(data.data);

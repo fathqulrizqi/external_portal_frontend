@@ -1,28 +1,70 @@
-// Centralized API logic for Company Profile
-// Supports dynamic base URL via environment or parameter
-import axios from 'axios';
+import { API } from "../index";
 
-const getBaseUrl = (application) => {
-  // Use env or parameter for multi-app support
-  return process.env.VITE_API_URL || `/api/company?application=${application || ''}`;
+/* ================= GET ================= */
+export const getCompanyProfile = async (mainFolder) => {
+  const response = await API.get(
+    `/users/company/me`,
+    { params: { mainFolder } }
+  );
+  return response.data;
 };
 
-export const getCompanyProfile = async (application) => {
-  const url = getBaseUrl(application);
-  return axios.get(url);
+/* ================= CREATE ================= */
+export const createCompanyProfile = async (data, mainFolder) => {
+  const body = data instanceof FormData ? data : new FormData();
+
+  // if (!(data instanceof FormData)) {
+  //   Object.entries(data).forEach(([key, value]) => {
+  //     if (Array.isArray(value)) {
+  //       value.forEach(v => body.append(key, v));
+  //     } else if (value !== null && value !== undefined) {
+  //       body.append(key, value);
+  //     }
+  //   });
+  // }
+
+  const response = await API.post(
+    `/users/company`,
+    body, 
+    {
+      params: { mainFolder },
+      headers: { "Content-Type": "multipart/form-data" } 
+    }
+  );
+
+  return response.data;
 };
 
-export const updateCompanyProfile = async (id, data, application) => {
-  const url = `${getBaseUrl(application)}/${id}`;
-  return axios.put(url, data);
+/* ================= UPDATE ================= */
+export const updateCompanyProfile = async (id, data, mainFolder) => {
+  const formData = new FormData();
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach(v => formData.append(key, v));
+    } else if (value !== null && value !== undefined) {
+      formData.append(key, value);
+    }
+  });
+
+  const response = await API.put(
+    `/users/company/${id}`,
+    formData,
+    {
+      params: { mainFolder },
+      headers: { "Content-Type": "multipart/form-data" }
+    }
+  );
+
+  return response.data;
 };
 
-export const deleteCompanyProfile = async (id, application) => {
-  const url = `${getBaseUrl(application)}/${id}`;
-  return axios.delete(url);
-};
+/* ================= DELETE ================= */
+export const deleteCompanyProfile = async (id, mainFolder) => {
+  const response = await API.delete(
+    `/users/company/${id}`,
+    { params: { mainFolder } }
+  );
 
-export const createCompanyProfile = async (data, application) => {
-  const url = getBaseUrl(application);
-  return axios.post(url, data);
+  return response.data;
 };

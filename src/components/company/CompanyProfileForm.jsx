@@ -1,10 +1,18 @@
+
 import React from "react";
 import { getCompanySegments } from "../../api/company/segment";
 import { InputText } from "primereact/inputtext";
-import { Dropdown } from "primereact/dropdown";
 import { MultiSelect } from "primereact/multiselect";
 import { RadioButton } from "primereact/radiobutton";
 import { Calendar } from "primereact/calendar";
+import { FileUpload } from "primereact/fileupload";
+import { Image } from "primereact/image";
+import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
+import { groupedCities } from "../../utils/constants/company";
+import { getAppName } from "../../utils/location";
+import { createCompanyProfile } from "../../api/company";
+
 export function CompanyProfileForm({
   initialValues,
   onSubmit,
@@ -13,6 +21,15 @@ export function CompanyProfileForm({
 }) {
   const [form, setForm] = React.useState(initialValues || {});
   const [segmentOptions, setSegmentOptions] = React.useState([]);
+  const DEFAULT_IMAGE =
+    "https://asamco.com/wp-content/uploads/2021/02/company-icon-vector-isolated-white-background-company-transparent-sign-company-icon-vector-isolated-white-background-company-134078740.jpg";
+
+  const [imagePreview, setImagePreview] = React.useState(
+    initialValues?.companyImageUrl || DEFAULT_IMAGE
+  );
+  const fileUploadRef = React.useRef(null);
+  const [fileName, setFileName] = React.useState("");
+  const appName = getAppName(); 
 
   React.useEffect(() => {
     async function fetchSegments() {
@@ -43,24 +60,87 @@ export function CompanyProfileForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDropdownChange = (name, e) => {
-    setForm((prev) => ({ ...prev, [name]: e.value }));
-  };
-
   const handleMultiSelectChange = (e) => {
     setForm((prev) => ({ ...prev, segments: e.value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(form);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const dataToSend = new FormData();
+
+  Object.entries(form).forEach(([key, value]) => {
+    if (key !== "companyImage") {
+      if (Array.isArray(value)) {
+        value.forEach(v => dataToSend.append(key, v));
+      } else if (value !== null && value !== undefined) {
+        dataToSend.append(key, value);
+      }
+    }
+  });
+
+  dataToSend.append("companyType", "Distributor");
+  dataToSend.append("application", appName);
+  dataToSend.append("companyCode", "a");
+
+  // Handling Image
+if (form.companyImage instanceof File) {
+  dataToSend.append("companyImage", form.companyImage);
+} else {
+  const dummyPdfContent = new Uint8Array([
+    0x25, 0x50, 0x44, 0x46, 0x2D 
+  ]);
+
+  const dummyPdf = new File(
+    [dummyPdfContent],
+    "empty.pdf",
+    { type: "application/file" }
+  );
+
+  dataToSend.append("companyImage", dummyPdf);
+}
+
+
+  try {
+    // Kirim dataToSend (FormData) langsung
+    const result = await createCompanyProfile(dataToSend, "Company");
+    console.log("Create success:", result);
+  } catch (error) {
+    console.error("Create failed:", error);
+  }
+};
+
+  const onSelectImage = (e) => {
+    const file = e.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Only image allowed");
+      return;
+    }
+
+    if (file.size > 2_000_000) {
+      alert("Max file size 2MB");
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      companyImage: file,
+    }));
+
+    setImagePreview(URL.createObjectURL(file));
+    setFileName(file.name); // \u2705 SIMPAN NAMA FILE
+
+    // supaya bisa pilih ulang
+    fileUploadRef.current?.clear();
   };
 
   /* ===============================
      STYLES
   =============================== */
   const labelClass = "block text-md font-medium text-gray-700 mb-2";
-
+  const asterisk = <span className="text-red-500">*</span>;
   /* ===============================
      OPTIONS
   =============================== */
@@ -90,11 +170,45 @@ export function CompanyProfileForm({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Company Image */}
+        <div>
+          <label className={labelClass}>Company Image</label>
+
+          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6">
+            {/* Preview */}
+            <Image
+              src={imagePreview}
+              alt="Company Image"
+              width="180"
+              preview
+              className="rounded"
+            />
+
+            {/* Upload */}
+            <div className="flex flex-col items-center sm:items-start gap-2">
+              <FileUpload
+                ref={fileUploadRef}
+                mode="basic"
+                accept="image/*"
+                maxFileSize={2000000}
+                customUpload
+                auto={false}
+                chooseLabel="Upload Image"
+                onSelect={onSelectImage}
+                className="p-button-sm"
+              />
+              <small className="text-gray-500">
+                {fileName || "No file selected"}
+              </small>
+
+              <small className="text-gray-500">JPG / PNG, max 2MB</small>
+            </div>
+          </div>
+        </div>
+
         {/* Company Name */}
         <div>
-          <label className={labelClass}>
-            Company Name <span className="text-red-500">*</span>
-          </label>
+          <label className={labelClass}>Company Name {asterisk}</label>
           <InputText
             name="companyName"
             value={form.companyName || ""}
@@ -104,63 +218,9 @@ export function CompanyProfileForm({
           />
         </div>
 
-        {/* NPWP */}
-        <div>
-          <label className={labelClass}>
-            NPWP <span className="text-red-500">*</span>
-          </label>
-          <InputText
-            name="npwp"
-            value={form.npwp || ""}
-            onChange={handleInputChange}
-            className="w-full p-inputtext-sm"
-            required
-          />
-        </div>
-
-        {/* Company Code */}
-        <div>
-          <label className={labelClass}>Company Code</label>
-          <InputText
-            name="companyCode"
-            value={form.companyCode || ""}
-            onChange={handleInputChange}
-            className="w-full p-inputtext-sm"
-          />
-        </div>
-
-        {/* City */}
-        <div>
-          <label className={labelClass}>City</label>
-          <InputText
-            name="companyCity"
-            value={form.companyCity || ""}
-            onChange={handleInputChange}
-            className="w-full p-inputtext-sm"
-          />
-        </div>
-
-        {/* Founding Date */}
-         <div>
-      <label className="block text-md font-medium text-gray-700 mb-2">
-        Founding Date
-      </label>
-
-      <Calendar
-       value={form.companyFoundingDate || ""}
-            onChange={handleInputChange}
-        dateFormat="dd/mm/yy"
-        showIcon  
-        className="w-full"
-        placeholder="Select founding date"
-      />
-    </div>
-
         {/* Segments */}
         <div>
-          <label className={labelClass}>
-            Segments <span className="text-red-500">*</span>
-          </label>
+          <label className={labelClass}>Segments {asterisk}</label>
           <MultiSelect
             value={form.segments || []}
             options={segmentOptions}
@@ -172,55 +232,9 @@ export function CompanyProfileForm({
           />
         </div>
 
-        {/* Address */}
-        <div>
-          <label className={labelClass}>
-            Address <span className="text-red-500">*</span>
-          </label>
-          <InputText
-            name="companyAddress"
-            value={form.companyAddress || ""}
-            onChange={handleInputChange}
-            className="w-full p-inputtext-sm text-sm"
-            required
-          />
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className={labelClass}>
-            Email <span className="text-red-500">*</span>
-          </label>
-          <InputText
-            type="email"
-            name="companyEmail"
-            value={form.companyEmail || ""}
-            onChange={handleInputChange}
-            className="w-full p-inputtext-sm"
-            required
-          />
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label className={labelClass}>
-            Phone / Fax <span className="text-red-500">*</span>
-          </label>
-          <InputText
-            name="companyTelpFax"
-            keyfilter="int"
-            value={form.companyTelpFax || ""}
-            onChange={handleInputChange}
-            className="w-full p-inputtext-sm"
-            required
-          />
-        </div>
-
         {/* Status */}
         <div>
-          <label className={labelClass}>
-            Status <span className="text-red-500">*</span>
-          </label>
+          <label className={labelClass}>Status {asterisk}</label>
 
           {/* GROUP RADIO PT / CV / BUMN */}
           <div className="flex flex-column gap-6 mt-2">
@@ -270,24 +284,100 @@ export function CompanyProfileForm({
           </div>
         </div>
 
+        {/* NPWP */}
+        <div>
+          <label className={labelClass}>NPWP {asterisk}</label>
+          <InputText
+            name="npwp"
+            value={form.npwp || ""}
+            onChange={handleInputChange}
+            className="w-full p-inputtext-sm"
+            required
+          />
+        </div>
+
+        {/* Address */}
+        <div>
+          <label className={labelClass}>Address {asterisk}</label>
+          <InputText
+            name="companyAddress"
+            value={form.companyAddress || ""}
+            onChange={handleInputChange}
+            className="w-full p-inputtext-sm text-sm"
+            required
+          />
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label className={labelClass}>Phone / Fax {asterisk}</label>
+          <InputText
+            name="companyTelpFax"
+            keyfilter="int"
+            value={form.companyTelpFax || ""}
+            onChange={handleInputChange}
+            className="w-full p-inputtext-sm"
+            required
+          />
+        </div>
+
+        {/* City */}
+        <div>
+          <label className={labelClass}>City {asterisk}</label>
+
+          <Dropdown
+            value={form.companyCity || null}
+            options={groupedCities}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, companyCity: e.value }))
+            }
+            optionGroupLabel="label"
+            optionGroupChildren="items"
+            optionLabel="label"
+            filter
+            showClear
+            placeholder="Select City"
+            className="w-full"
+          />
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className={labelClass}>Email {asterisk}</label>
+          <InputText
+            type="email"
+            name="companyEmail"
+            value={form.companyEmail || ""}
+            onChange={handleInputChange}
+            className="w-full p-inputtext-sm"
+            required
+          />
+        </div>
+
+        {/* Company Code (Hidden - Auto-generated) */}
+        <input type="hidden" name="companyCode" value={form.companyCode || "a"} />
+
+        {/* Application (Hidden - Auto-generated) */}
+        <input type="hidden" name="application" value={form.application || appName} />
+
         {/* Actions */}
         <div className="flex gap-3 pt-4">
-          <button
+          <Button
             type="submit"
-            disabled={loading}
-            className="bg-green-600 text-white px-5 py-2 rounded-lg disabled:opacity-60"
-          >
-            {loading ? "Saving..." : "Save"}
-          </button>
+            label={loading ? "Saving..." : "Save"}
+            icon="pi pi-check"
+            loading={loading}
+            className="p-button-success"
+          />
 
           {onCancel && (
-            <button
+            <Button
               type="button"
+              label="Cancel"
+              icon="pi pi-times"
+              className="p-button-secondary"
               onClick={onCancel}
-              className="bg-gray-300 text-gray-800 px-5 py-2 rounded-lg"
-            >
-              Cancel
-            </button>
+            />
           )}
         </div>
       </form>
