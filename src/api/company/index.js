@@ -36,23 +36,24 @@ export const createCompanyProfile = async (data, mainFolder) => {
 };
 
 /* ================= UPDATE ================= */
-export const updateCompanyProfile = async (id, data, mainFolder) => {
-  const formData = new FormData();
+export const updateCompanyProfile = async ( data, mainFolder) => {
+  const body = data instanceof FormData ? data : new FormData();
 
-  Object.entries(data).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      value.forEach(v => formData.append(key, v));
-    } else if (value !== null && value !== undefined) {
-      formData.append(key, value);
-    }
-  });
+  // Object.entries(data).forEach(([key, value]) => {
+  //   if (Array.isArray(value)) {
+  //     value.forEach(v => formData.append(key, v));
+  //   } else if (value !== null && value !== undefined) {
+  //     formData.append(key, value);
+  //   }
+  // });
 
-  const response = await API.put(
-    `/users/company/${id}`,
-    formData,
+ 
+  const response = await API.patch(
+    `/users/company`,
+    body, 
     {
       params: { mainFolder },
-      headers: { "Content-Type": "multipart/form-data" }
+      headers: { "Content-Type": "multipart/form-data" } 
     }
   );
 

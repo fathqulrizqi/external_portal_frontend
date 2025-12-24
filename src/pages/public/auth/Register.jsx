@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { register, login } from "../../../api/auth";
-import { navigateByRole } from "../../../utils/navigateByRole";
+import { navigateByRole } from "../../../utils/navigate";
 import { Divider } from 'primereact/divider';
+import { Message } from "primereact/message";
 
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
@@ -67,15 +68,15 @@ function Register() {
       (hasUpper && hasNumber) ||
       (hasLength && hasLength)
     ) {
-      return 1; // Medium
+      return 1; 
     }
 
-    return 0; // Weak
+    return 0; 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();    
-
+    setSubmitted(true);
     const validationErrors = validateForm(registerSchema, form);
 
     if (Object.keys(validationErrors).length > 0) {
@@ -141,13 +142,7 @@ function Register() {
 
   return (
     <div className="py-16 bg-slate-50 flex flex-col items-center justify-center px-4">
-      {errorMsg && (
-        <div className="mb-4 w-full max-w-5xl mx-auto display-block justify-center">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center" role="alert">
-            <span className="block sm:inline">{errorMsg}</span>
-          </div>
-        </div>
-      )}
+     
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         {/* Title */}
         <div className="text-center md:text-left px-2">
@@ -158,6 +153,10 @@ function Register() {
           <p className="text-slate-600 mt-2">Join the Distributor PO Portal</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 p-fluid">
+           {errorMsg && (
+              <Message severity="error" text={errorMsg} className="mb-4! w-full" />
+            )}
+          
           {/* Full Name */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-800">

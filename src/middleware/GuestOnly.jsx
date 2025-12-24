@@ -10,8 +10,22 @@
 // }
 
 import React from "react";
+import { getToken } from "../utils/cookies";
+import { navigateByRedirect } from "../utils/navigate";
+import { getAppName, getRedirectName } from "../utils/location";
+import { useNavigate } from "react-router-dom";
 
 export default function GuestOnly({ children }) {
-  // Hanya render halaman login/register, redirect ditangani di RequireAuth
+  // const token = getToken();
+  // const role = JSON.parse(localStorage.getItem("role"));
+  // const appName = getAppName();
+  // const navigate = useNavigate();
+  // const redirect = getRedirectName();
+
+  // if (token){
+  //   navigateByRedirect(role, navigate, appName, redirect)
+  // }
+
   return children;
 }
+

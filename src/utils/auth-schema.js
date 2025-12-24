@@ -44,8 +44,9 @@ export const loginSchema = Joi.object({
     "string.email": "Email is not valid",
   }),
 
-  password: Joi.string().required().messages({
+  password: Joi.string().min(10).required().messages({
     "string.empty": "Password is required",
+    "string.min": "Password must be at least 10 characters long",
   }),
 }).unknown(true);
 

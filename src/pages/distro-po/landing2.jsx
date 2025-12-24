@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../../api/auth";
 import imgBackground from "../../assets/images/cover-register.png";
-import { navigateByRole } from "../../utils/navigateByRole";
+import { navigateByRole } from "../../utils/navigate";
 function DistroPoLandingPage2() {
   const navigate = useNavigate();
 

@@ -1,45 +1,34 @@
 import { useEffect, useState } from "react";
-import { API } from "../api";
+import { getSidebar } from "../api/sidebar"; 
 import { getToken } from "../utils/cookies";
-import { getProfile } from "../api/hamburger-menu";
+import { useNavigate } from "react-router-dom";
+import { getAppName } from "../utils/location";
 
 export default function useSidebarAuth() {
-  const [sidebar, setSidebar] = useState(null);
+  const [sidebar, setSidebar] = useState(null); // Mulai dengan null
   const [loading, setLoading] = useState(true);
-  const [errorCode, setErrorCode] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorCode, setErrorCode] = useState(null);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      console.log("Check  message: " + getToken());
-      setErrorCode(401);
-      setLoading(false);
-      return;
-    }
-
     const fetchSidebar = async () => {
-      try {
-        const { data } = await API.get("/users/sidebar");
+      const res = await getSidebar();
 
-        if (data?.status === "Success") {
-          setSidebar(data.data);
-        }
-
-        getProfile();
-      } catch (err) {
-        const status = err?.response?.status;
-        const msg = err?.response?.data?.errors;
-
-        setErrorCode(status);
-        setErrorMessage(msg);
-      } finally {
-        setLoading(false);
+      if (res.success) {
+        setSidebar(res.data);
+      } else {
+        // Simpan pesan error dan code-nya
+        setErrorMessage(res.message);
+        setErrorCode(res.status); // Pastikan api/sidebar me-return status code
+        
+        // JANGAN navigate ke register-otp di sini jika dashboard public
+        setSidebar([]); // Set sidebar kosong saja agar tidak dianggap "null/loading"
       }
+      setLoading(false);
     };
 
     fetchSidebar();
   }, []);
 
-  return { sidebar, loading, errorCode, errorMessage };
+  return { sidebar, loading, errorMessage, errorCode };
 }

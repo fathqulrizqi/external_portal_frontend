@@ -13,11 +13,12 @@ export const getSidebar = async () => {
     const msg = err.response?.data?.message 
       || err.response?.data?.errors 
       || "Failed retrieving sidebar";
-
+    const status = err.response?.status
     return { 
       success: false, 
       data: [], 
-      message: msg 
+      message: msg,
+      status: status
     };
   }
 };

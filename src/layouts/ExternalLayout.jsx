@@ -2,7 +2,7 @@ import imgCover from "../assets/images/cover-register.png";
 import HeaderExternal from "../components/HeaderExternal";
 import { useActiveBreakpoint } from "../hooks/useBreakpoints";
 import { useEffect, useState } from "react";
-import { getSidebar } from "../api/portal-external";
+import { getSidebar } from "../api/sidebar";
 import { useNavigate } from "react-router-dom";
 
 function SearchBar() {

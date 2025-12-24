@@ -177,14 +177,11 @@ export default function MasterItemPage() {
           <span className="text-gray-500 font-medium">Loading catalog data...</span>
         </div>
       ) : data.length === 0 ? (
-        /* Render EmptyState langsung tanpa pembungkus div bg-white tambahan 
-           untuk menghindari efek "box-in-box" */
         <EmptyState
           title="No Master Items Found"
           description="Your product catalog is currently empty. Start by adding items to the table."
         />
       ) : (
-        /* Box Putih hanya muncul jika ada data (Tabel ditampilkan) */
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <style>{`
             .htContainer { position: relative; z-index: 1 !important; }

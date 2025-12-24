@@ -11,7 +11,9 @@ import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { groupedCities } from "../../utils/constants/company";
 import { getAppName } from "../../utils/location";
-import { createCompanyProfile } from "../../api/company";
+import { createCompanyProfile, updateCompanyProfile } from "../../api/company";
+import { useNavigate } from "react-router-dom";
+import { navigateCompanyProfile } from "../../utils/navigate";
 
 export function CompanyProfileForm({
   initialValues,
@@ -30,6 +32,7 @@ export function CompanyProfileForm({
   const fileUploadRef = React.useRef(null);
   const [fileName, setFileName] = React.useState("");
   const appName = getAppName(); 
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     async function fetchSegments() {
@@ -86,28 +89,34 @@ const handleSubmit = async (e) => {
   // Handling Image
 if (form.companyImage instanceof File) {
   dataToSend.append("companyImage", form.companyImage);
-} else {
-  const dummyPdfContent = new Uint8Array([
-    0x25, 0x50, 0x44, 0x46, 0x2D 
-  ]);
-
-  const dummyPdf = new File(
-    [dummyPdfContent],
-    "empty.pdf",
-    { type: "application/file" }
-  );
-
-  dataToSend.append("companyImage", dummyPdf);
+} else if (!form.id) {
+  const dummyFile = new File([new Uint8Array([0x00])], "empty.jpg", { type: "image/jpeg" });
+  dataToSend.append("companyImage", dummyFile);
 }
+try {
+  let result;
+  if (form.companyId) { 
+    result = await updateCompanyProfile(dataToSend, "Company");
+    //  if (result.success) {
+    
+    //     navigateCompanyProfile(navigate, appName);
+    
+    // }
 
+  } else {
+    result = await createCompanyProfile(dataToSend, "Company");
 
-  try {
-    // Kirim dataToSend (FormData) langsung
-    const result = await createCompanyProfile(dataToSend, "Company");
-    console.log("Create success:", result);
-  } catch (error) {
-    console.error("Create failed:", error);
+    // if (result.success) {
+    
+    //     navigateCompanyProfile(navigate, appName);
+    
+    // }
+
   }
+  if (onSubmit) onSubmit(result);
+} catch (error) {
+  console.error(error);
+}
 };
 
   const onSelectImage = (e) => {

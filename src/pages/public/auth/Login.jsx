@@ -1,7 +1,7 @@
 import { useState, useRef } from "react"; // <-- Import useRef
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, redirect } from "react-router-dom";
 import { login } from "../../../api/auth";
-import { navigateByRole } from "../../../utils/navigateByRole";
+import { navigateByRedirect, navigateByRole } from "../../../utils/navigate";
 import ReCAPTCHA from "react-google-recaptcha"; 
 
 import { InputText } from "primereact/inputtext";
@@ -12,13 +12,14 @@ import { Divider } from "primereact/divider";
 
 import { loginSchema } from "../../../utils/auth-schema";
 import { validateForm } from "../../../utils/constants/validateForm";
+import { getRedirectName } from "../../../utils/location";
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const redirect = getRedirectName();
   const recaptchaRef = useRef(null);
 
   const appName = location.pathname.split("/")[1] || "public";
@@ -58,7 +59,6 @@ function Login() {
 
     if (Object.keys(validationErrors).length > 0) return;
 
-    // --- 2. Verifikasi ReCAPTCHA di Sisi Klien ---
     const recaptchaToken = recaptchaRef.current.getValue();
 
     if (!recaptchaToken) {
@@ -67,21 +67,29 @@ function Login() {
     }
     recaptchaRef.current.reset();
 
-    // Lanjutkan ke proses login
     const result = await login({ ...form, recaptchaToken }); 
 
-    if (!result.success) {
-      if (result.message === "Recaptcha verification failed") {
-         setErrorMsg("Security check failed. Please try again.");
-      } else {
-         setErrorMsg("Invalid email or password");
-      }
-      return;
+if (!result.success) {
+    if (result.status === 404) {
+      setErrorMsg(result.message);
+      setTimeout(() => navigate(`${basePath}/register`), 2000);
+    } 
+    else if (result.status === 401) {
+      setErrorMsg(result.message);
     }
+    else if (result.status === 406) {
+      setErrorMsg(result.message);
+    }
+    else {
+      setErrorMsg(result.message || "Invalid email or password");
+    }
+    return;
+  }
 
-    const role = JSON.parse(localStorage.getItem("role"));
-    navigateByRole(role, navigate, appName);
-  };
+  // LOGIN BERHASIL
+  const role = JSON.parse(localStorage.getItem("role"));
+  navigateByRole(role, navigate, appName);
+};
 
   return (
     <div className="py-36 bg-slate-50 flex items-center justify-center px-4">

@@ -6,7 +6,7 @@ import { Divider } from "primereact/divider";
 import { API } from "../../../api";
 import imgBackground from "../../../assets/images/cover-register.png";
 import useOtpTimer from "../../../hooks/useOtpTimer";
-import { navigateByRole } from "../../../utils/navigateByRole";
+import { navigateByRole } from "../../../utils/navigate";
 import { getToken } from "../../../utils/cookies";
 
 function LoginOtp() {

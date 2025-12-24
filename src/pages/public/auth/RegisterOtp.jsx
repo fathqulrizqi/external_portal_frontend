@@ -1,100 +1,98 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom"; 
-import { InputOtp } from "primereact/inputotp"; 
-import { Button } from "primereact/button"; 
-import { Divider } from "primereact/divider"; 
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { InputOtp } from "primereact/inputotp";
+import { Button } from "primereact/button";
+import { Divider } from "primereact/divider";
 import { API } from "../../../api";
+import { Message } from "primereact/message";
+
 // import imgBackground from "../../../assets/images/cover-register.png"; // Tidak digunakan
 import useOtpTimer from "../../../hooks/useOtpTimer";
-import { getToken } from "../../../utils/cookies";
-import { navigateByRole } from "../../../utils/navigateByRole";
-import { login } from "../../../api/auth";
+import { getRole, getToken } from "../../../utils/cookies";
+import { navigateByRole } from "../../../utils/navigate";
+import { login, OTPRegistrationVerification } from "../../../api/auth";
+import { getAppName } from "../../../utils/location";
 
 function RegisterOtp() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const message = state?.msg;
-  const appName = state?.appName || "public"; 
+  const appName = getAppName();
   const basePath = `/${appName}`;
-
-  const [otp, setOtp] = useState(""); 
+  const [otp, setOtp] = useState("");
   const { timer, resetTimer, formatTime } = useOtpTimer(120);
   const [errorMsg, setErrorMsg] = useState("");
   const [resending, setResending] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (otp.length !== 6) return setErrorMsg("OTP must be 6 digits.");
+  if (otp.length !== 6) return setErrorMsg("OTP must be 6 digits.");
 
-    let verifyRes;
-    try {
-      const token = getToken();
-      const { data } = await API.post(
-        "/users/OTPRegistrationVerification",
-        { otp: otp },
-        { headers: { Authorization: `${token}` } }
-      );
+  setLoading(true); // Pastikan kamu punya state [loading, setLoading]
+  setErrorMsg("");
 
-      if (data.status !== "Success") {
-        setErrorMsg(data.message);
-        return;
-      }
+  try {
+    // 1. Panggil fungsi API (jangan pakai variabel 'data' langsung di sini)
+    const result = await OTPRegistrationVerification({ otp });
 
-      console.log("Register OTP Valid!");
-      verifyRes = true;
-
-    } catch (err) {
-      const errorDetail = err.response?.data?.message || "Wrong OTP or connection error.";
-      setErrorMsg(errorDetail);
+    // 2. Cek success dari return value fungsi tersebut
+    if (!result.success) {
+      setErrorMsg(result.message || "Wrong OTP or connection error.");
+      setLoading(false);
       return;
     }
 
-    if (!verifyRes) return;
+    console.log("Register OTP Valid!");
 
-    try {
-      const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
+    // 3. Proses Login Otomatis
+    const temp = JSON.parse(sessionStorage.getItem("tempRegister"));
 
-      if (!temp) {
-        alert("Session expired. Please login manually.");
-        navigate(`${basePath}/login`);
-        return;
-      }
-
-      const loginRes = await login({
-        email: temp.email,
-        password: temp.password,
-        application: temp.application,
-      });
-
-      if (!loginRes.success) {
-        alert("Login failed after OTP. Please login manually.");
-        navigate(`${basePath}/login`);
-        return;
-      }
-
-      sessionStorage.removeItem("tempRegister");
-
-      const role = JSON.parse(localStorage.getItem("role"));
-
-      navigateByRole(role, navigate, appName);
-
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong during automatic login.");
+    if (!temp) {
+      alert("Session expired. Please login manually.");
       navigate(`${basePath}/login`);
+      return;
     }
-  };
 
+    const loginRes = await login({
+      email: temp.email,
+      password: temp.password,
+      application: temp.application,
+    });
+
+    // Handle login success atau kasus "Account is not active" (verifikasi admin)
+    if (loginRes.success || loginRes.message === "Account is not active") {
+  const role = getRole();
+  const token = getToken();
+  
+  console.log("Login Sukses, Token didapat:", token);
+  console.log("Role user:", role);
+  
+  sessionStorage.removeItem("tempRegister"); 
+  
+  // Pastikan navigateByRole benar-benar tereksekusi
+  console.log("Mengarahkan ke dashboard...");
+  navigateByRole(role, navigate, appName);
+  return; // Hentikan eksekusi script di sini
+}
+  } catch (err) {
+    // Catch ini hanya akan kena jika ada error fatal (misal JSON.parse gagal)
+    setErrorMsg("An unexpected error occurred.");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
   const handleResend = async () => {
-    if (resending) return; 
+    if (resending) return;
     setResending(true);
     setErrorMsg("");
 
     try {
       const token = getToken();
       await API.post("/users/OTP", null, {
-        headers: { Authorization: `${token}` }
+        headers: { Authorization: `${token}` },
       });
       resetTimer();
       setOtp("");
@@ -109,36 +107,30 @@ function RegisterOtp() {
     <div className="py-32 bg-slate-50 flex justify-center px-4">
       {/* Struktur kartu putih terpusat, disamakan dengan LoginOtp */}
       <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 space-y-4">
-        
         <h2 className="text-2xl font-bold text-center">OTP Verification</h2>
-        
+
         {message && (
-           <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-lg text-center text-sm">
-             {message}
-           </div>
+          <Message severity="success" text={message} className="mb-4! w-full" />
         )}
-        
+
         <p className="text-center text-gray-600">
           Enter the 6-digit OTP sent to your registered email.
         </p>
 
-        {errorMsg && (
-          <p className="text-red-600 text-center">{errorMsg}</p>
-        )}
+        {errorMsg && <p className="text-red-600 text-center">{errorMsg}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
           {/* PrimeReact InputOtp */}
           <div className="flex justify-center">
             <InputOtp
-                value={otp}
-                onChange={(e) => setOtp(e.value)}
-                length={6}
-                integerOnly
-                className="otp-input"
+              value={otp}
+              onChange={(e) => setOtp(e.value)}
+              length={6}
+              integerOnly
+              className="otp-input"
             />
           </div>
-          
+
           {/* Countdown / Resend */}
           <p className="text-center text-gray-700 text-sm">
             {timer > 0 ? (
@@ -151,7 +143,9 @@ function RegisterOtp() {
                 type="button"
                 onClick={handleResend}
                 disabled={resending}
-                className={`font-semibold cursor-pointer ${resending ? 'text-slate-400' : 'text-blue-600 hover:underline'}`}
+                className={`font-semibold cursor-pointer ${
+                  resending ? "text-slate-400" : "text-blue-600 hover:underline"
+                }`}
               >
                 {resending ? "Sending..." : "Resend OTP"}
               </button>
@@ -178,7 +172,6 @@ function RegisterOtp() {
             Login
           </Link>
         </p>
-
       </div>
     </div>
   );

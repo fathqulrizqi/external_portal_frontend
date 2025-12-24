@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -11,9 +10,7 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
       <div className="w-full">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-800">Company Profile</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            No company profile found
-          </p>
+          <p className="text-sm text-gray-600 mt-1">No company profile found</p>
         </div>
 
         <div className="flex justify-center">
@@ -28,13 +25,14 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
     );
   }
 
-  const statusSeverity = {
-    PT: "success",
-    CV: "info",
-    BUMN: "warning",
-  }[company.companyStatus] || "secondary";
+  const statusSeverity =
+    {
+      PT: "success",
+      CV: "info",
+      BUMN: "warning",
+    }[company.companyStatus] || "secondary";
 
-  const imageUrl = company.urlImage 
+  const imageUrl = company.urlImage
     ? `${import.meta.env.VITE_API_BASE_URL}/images/Company/${company.urlImage}`
     : "https://asamco.com/wp-content/uploads/2021/02/company-icon-vector-isolated-white-background-company-transparent-sign-company-icon-vector-isolated-white-background-company-134078740.jpg";
 
@@ -62,8 +60,8 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
             className="rounded"
           />
           <div className="flex flex-col gap-2">
-            <Tag 
-              value={company.companyStatus} 
+            <Tag
+              value={company.companyStatus}
               severity={statusSeverity}
               className="text-sm"
             />
@@ -91,10 +89,10 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
             {company.segments?.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {company.segments.map((s, i) => (
-                  <Tag 
-                    key={i} 
-                    value={s.segmentName || `Segment ${s}`} 
-                    severity="secondary" 
+                  <Tag
+                    key={i}
+                    value={s.segmentName || `Segment ${s}`}
+                    severity="secondary"
                     className="text-sm"
                     rounded
                   />
@@ -134,7 +132,9 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
         <div>
           <label className={labelClass}>Phone / Fax</label>
           <div className="w-full p-3 border border-gray-200 rounded bg-gray-50 text-gray-900">
-            {company.companyTelpFax}
+            {company.companyTelpFax || (
+              <span className="text-gray-500">No Phone / Fax</span>
+            )}
           </div>
         </div>
 
@@ -150,8 +150,8 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
         <div>
           <label className={labelClass}>Email</label>
           <div className="w-full p-3 border border-gray-200 rounded bg-gray-50">
-            <a 
-              href={`mailto:${company.companyEmail}`} 
+            <a
+              href={`mailto:${company.companyEmail}`}
               className="text-primary font-medium no-underline hover:underline"
             >
               {company.companyEmail}
@@ -199,10 +199,20 @@ export function CompanyProfileView({ company, onEdit, onDelete }) {
       {/* Meta Info */}
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="flex justify-between text-xs text-gray-500">
-          <span>ID: {company.id || 'N/A'}</span>
+          <span>ID: {company.companyId || "N/A"}</span>
           <div className="flex gap-4">
-            <span>Created: {company.createdAt ? new Date(company.createdAt).toLocaleDateString('id-ID') : "-"}</span>
-            <span>Last Update: {company.updatedAt ? new Date(company.updatedAt).toLocaleDateString('id-ID') : "-"}</span>
+            <span>
+              Created:{" "}
+              {company.createdAt
+                ? new Date(company.createdAt).toLocaleDateString("id-ID")
+                : "-"}
+            </span>
+            <span>
+              Last Update:{" "}
+              {company.updatedAt
+                ? new Date(company.updatedAt).toLocaleDateString("id-ID")
+                : "-"}
+            </span>
           </div>
         </div>
       </div>
